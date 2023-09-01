@@ -19,5 +19,12 @@ void PYBIND11_INIT_REGISTRY(py::module_& m) {
         .def("register_alias", &XTypeRegistry::register_alias)
         .def("knows_class", &XTypeRegistry::knows_class)
         .def("instantiate_from", &XTypeRegistry::instantiate_from)
-        .def("import_from", &XTypeRegistry::import_from);
+        .def("import_from", &XTypeRegistry::import_from)
+        .def("knows_uri", &XTypeRegistry::knows_uri, py::arg("uri"))
+        .def("commit", &XTypeRegistry::commit, py::arg("instance"), py::arg("overwrite_if_exists"))
+        .def("get_by_uri", py::overload_cast< const std::string& >(&XTypeRegistry::get_by_uri), py::arg("uri"))
+        .def("load_by_uri", &XTypeRegistry::load_by_uri, py::arg("uri"))
+        .def("set_load_func", &XTypeRegistry::set_load_func)
+        .def("drop", &XTypeRegistry::drop, py::arg("uri"))
+        .def("clear", &XTypeRegistry::clear);
 }

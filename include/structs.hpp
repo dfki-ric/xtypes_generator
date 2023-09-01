@@ -74,7 +74,9 @@ namespace xtypes {
 
     class XType;
 
-    /// Holds a weak pointer of the XType to which this edge points and the generic properties about this connection as json
+    /// A fact is referring to an target Xtype
+    /// target == nullptr is an empty fact
+    /// target != nullptr is a valid fact
     struct Fact {
         std::weak_ptr< XType > target;
         nl::json edge_properties;
@@ -84,5 +86,28 @@ namespace xtypes {
         bool operator!=(const Fact& other) const;
         bool operator==(const Fact& other) const;
     };
-    using Edge = Fact;
+
+    /// An extended fact is referring to an target Xtype
+    /// The target is either specified by an URI or by an weak pointer
+    /// target_uri == empty and target == nullptr is an empty fact
+    /// target_uri != empty and target == nullptr means that the fact has to be resolved (e.g. by the registry)
+    /// target_uri == empty and target != nullptr means that the fact is pending and the target might not yet been fully valid (e.g. is_uri_valid() is false)
+    /// target_uri != empty and target != nullptr means that the fact has been resolved and target_uri matches target.lock()->uri()
+    struct ExtendedFact : public Fact {
+        ExtendedFact(const std::string& target_uri, const nl::json& edge_properties);
+        ExtendedFact(std::weak_ptr<XType> target, const nl::json& edge_properties);
+
+        bool operator!=(const ExtendedFact& other) const;
+        bool operator==(const ExtendedFact& other) const;
+
+        // getter and setter for _target_uri
+        // the getter always tries target.lock()->uri() before returning _target_uri
+        const std::string target_uri() const;
+        // the setter will invalidate the target iff
+        // uri is not empty and target uri is invalid OR does not match
+        void target_uri(const std::string& uri);
+
+        private:
+            std::string _target_uri;
+    };
 }

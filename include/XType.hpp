@@ -8,24 +8,23 @@
 #include <string>
 #include <map>
 #include <set>
+#include <deque>
 
 #include "enums.hpp"
 #include "structs.hpp"
 #include "XTypeRegistry.hpp"
+
 namespace nl = nlohmann;
 namespace xtypes {
     /*Forward declarations*/
     class XType;
+    class XTypeRegistry;
 
     /* Some good aliases */
-
     using XTypePtr = std::shared_ptr< XType >;
     using XTypeCPtr = const std::shared_ptr< XType >;
     using ConstXTypePtr = std::shared_ptr< const XType >;
     using ConstXTypeCPtr = const std::shared_ptr< const XType >;
-    using ImportByURIFunc =  std::function< nl::json(const std::string&) >;
-    using URI2Spec = std::map< std::string, nl::json >;
-    using XTypeRegistryPtr = std::shared_ptr< XTypeRegistry >;
 
     /** Base class for all XType specializations.
      * XTypes are an object oriented type definition which like a normal class hold properties and can have member functions;
@@ -45,6 +44,9 @@ namespace xtypes {
         /// This method is modified by each derived type (see xtypes_generator)
         virtual std::string uri() const;
 
+        /// This method checks if the uri can be build
+        bool is_uri_valid() const;
+
         /// URI comparison for usage of XTypes
         virtual bool operator==(const XType& other) const { return this->uri() == other.uri(); };
         virtual bool operator!=(const XType& other) const { return !(*this == other); };
@@ -56,27 +58,36 @@ namespace xtypes {
         /// This method has to always return an up-to-date hash of the current uri
         std::size_t uuid() const;
 
+        /// Sets the registry of the XType if not already set
+        void set_registry_once(XTypeRegistryCPtr reg);
+
+        /// Overwrite the registry
+        /// TODO: Make this a protected member function with friend class XTypeRegistry?
+        void overwrite_registry(XTypeRegistryCPtr reg);
+
+        /// Returns the registry of this XType if set. Otherwise nullptr
+        XTypeRegistryCPtr get_registry() const;
+
         /* De-/Serialization from/to JSON */
 
-        /** Exports an XType, its dependencies and related XTypes to a map from XType uuid to json dictionary which could be dumped to a file
+        /**
+         * Exports an XType, its dependecies and properties into a JSON object
          * NOTE: This function is part of the basis for a json based XType database
-         * @param recursion_limit == 0: Only the current XType properties AND relations (dependent XType URIs) are exported
-         *        recursion_limit == 1: Current XType and neighbours are fully exported
-         *        recursion_limit > 1: and so forth
-         * @param whether we export the properties of the Facts/Relations as well
+         * @param max_depth Depth limit up to which dependent XTypes are resolved. -1 means no depth limit (full export)
+         *        Use max_depth != -1 if you want to do only a partial update. You should choose max_depth that it encompsas all made changes
+         * @returns The serialization in JSON
          */
-        URI2Spec export_to(const int recursion_limit = -1, const bool export_relation_properties=false) const;
+        std::map<std::string, nl::json> export_to(const int max_depth=-1);
 
-        /** Import an XType from a json specification. If dependent XTypes are to be resolved, there has to be a function loading new specs by URI string
+        /**
+         * Imports an XType, its dependencies and properties from an JSON object
          * NOTE: This function is part of the basis for a json based XType database
-         * NOTE: We do use the registry of the top-lvl XType to store all the dependent/instantiated XTypes
-         * TODO: std::function is very slow (see https://vittorioromeo.info/index/blog/passing_functions_to_functions.html). We should use something like the proposed function_view/function_ref
-         * @param The URI of the top level XType
-         * @param A Function pointer that provides the XType from URI
-         * @param The registry instance that holds the project XType specializations
-         * @param The recursion_limit for loading XTypes
+         * NOTE: We need a registry to create a new XType
+         * @param spec The JSON object to import from
+         * @param registry The project registry to use to import an XType
+         * @returns The resolved XType
          */
-        static XTypePtr import_from(const std::string& toplvl_uri, ImportByURIFunc load_spec_by_uri, XTypeRegistry& project_registry, const int recursion_limit=-1);
+        static XTypeCPtr import_from(const nl::json& spec, XTypeRegistryCPtr reg);
 
         /* Property Interface */
 
@@ -91,6 +102,7 @@ namespace xtypes {
          * @param (optional) The default value
          * @param (optional, default = false) Whether we redefine the previously vision
          */
+        // TODO: In xtypes3.1 we will update this
         void define_property(const std::string& name,
                              const nl::json::value_t& type=nl::json::value_t::discarded,
                              const std::set<nl::json>& allowed_values = {},
@@ -98,18 +110,23 @@ namespace xtypes {
                              const bool& override = false);
 
         /// This function checks if a property has been defined
+        // TODO: In xtypes3.1 we will update this
         bool has_property(const std::string& name) const;
 
         /// This function is used to get the type of a property
+        // TODO: In xtypes3.1 we will update this
         nl::json::value_t get_property_type(const std::string& name) const;
 
         /// Checks if a value can be assigned to a property
+        // TODO: In xtypes3.1 we will update this
         bool is_type_matching(const std::string& name, const nl::json& value);
 
         /// This function is used to get the allowed values of a property
+        // TODO: In xtypes3.1 we will update this
         std::set<nl::json> get_allowed_property_values(const std::string& name) const;
 
         /// Checks if a value can be assigned to a property
+        // TODO: In xtypes3.1 we will update this
         bool is_allowed_value(const std::string& name, const nl::json& value);
 
         /** This function sets a new value to an DEFINED property (see has_property)
@@ -117,18 +134,22 @@ namespace xtypes {
           * @param The new_value for this property
           * @param Whether we ensure the type correctness
          */
+        // TODO: In xtypes3.1 we will update this
         void set_property(const std::string& name, const nl::json& new_value, const bool shall_throw = true);
 
         /// This function gets the current value of an DEFINED property
+        // TODO: In xtypes3.1 we will update this
         nl::json get_property(const std::string& name) const;
 
         /// Returns all the DEFINED properties of the XType
+        // TODO: In xtypes3.1 we will update this
         nl::json get_properties() const;
 
         /** Set all matching properties at once. If shall_throw is true, an exception is triggered iff properties do not match.
          * @param A json map from name to value
          * @param Whether we ensure the type correctness
          */
+        // TODO: In xtypes3.1 we will update this
         void set_properties(const nl::json& properties, const bool shall_throw = true);
 
         /* Relation Interface */
@@ -174,32 +195,33 @@ namespace xtypes {
 
         /* Check if facts related to name exist or not
          * NOTE: This is NOT to confused with has_relation which checks if a DEFINITION for a relation exists.
-         * The facts would be instances of that relation definition (and do not necessarily have to exist) */
+         * The facts would be instances of that relation definition (and do not necessarily have to exist because they are UNKNOWN)
+         * NOTE: If the facts are empty, this function will return true (since they are not UNKNOWN)*/
+        // TODO: A better name would be are_facts_known()
         bool has_facts(const std::string& name) const;
-
-        /// Retrieve all the facts currently stored in the given named attribute
-        std::vector< Fact >& get_facts(const std::string& name);
-        const std::vector< Fact >& get_facts(const std::string& name) const;
-
-        /** Add a fact to the named relation
-         *  @param The name of the relation
-         *  @param The target XType
-         *  @param The fact properties
-         */
-        void add_fact(const std::string& name, XTypeCPtr xtype, const nl::json& props={});
-
-        /**
-         *  Remove a fact from a named relation
-         *  @param The name of the relation
-         *  @param The target XType
-         */
-        void remove_fact(const std::string& name, XTypeCPtr xtype);
 
         /// Initialize an UNKNOWN fact to be KNOWN and EMPTY
         void set_unknown_fact_empty(const std::string& name);
 
         /// Initializes all UNKNOWN facts to be KNOWN and EMPTY
         void set_all_unknown_facts_empty();
+
+        /// Retrieve all the facts currently stored in the given named attribute
+        const std::vector< Fact > get_facts(const std::string& name);
+
+        /** Add a fact to the named relation
+         *  @param The name of the relation
+         *  @param The target XType
+         *  @param The fact properties
+         */
+        void add_fact(const std::string& name, XTypeCPtr other, const nl::json& props={});
+
+        /**
+         *  Remove a fact from a named relation
+         *  @param The name of the relation
+         *  @param The target XType
+         */
+        void remove_fact(const std::string& name, XTypeCPtr other);
 
         /* Predefined relations */
         void HAS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
@@ -308,17 +330,21 @@ namespace xtypes {
             define_relation(name, RelationType::CONDITIONABLE_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
         }
 
-        /// Every XType gets a registry instance which has to be used when instantiating new XType(s) during runtime
-        std::shared_ptr< XTypeRegistry > registry;
-
     protected:
+        /// Every XType gets a registry instance which has to be used when instantiating new XType(s) during runtime
+        std::weak_ptr< XTypeRegistry > registry;
+
         std::string m_classname;
-        // TODO: If we allow multiple relation definitions per class attribute here, we could e.g. populate Interface::parent by relations to Component, ComponentModel and InterfaceModel
+
         std::map< std::string, Relation > relations;        /* < specifies which relation is attached to the corresponding entry in facts */
         std::map< std::string, bool > relation_dir_forward; /* < specifies whether the target (forward direction) or the source of a relation is filled into the corresponding entry in facts */
-        std::map< std::string, std::vector< Fact > > facts; /* < holds all the INSTANCES of a certain relation (aka edges) to/from other XTypes */
+        std::map< std::string, std::vector< ExtendedFact > > facts; /* < Holds facts/references to other XTypes (either by URI or by weak pointer) */
+
+        // TODO: In xtypes3.1 we will update this
         std::map< std::string, nl::json > properties;       /* < holds all the entities which have been defined as properties */
+        // TODO: In xtypes3.1 we will update this
         std::map< std::string, nl::json::value_t > property_types; /* < holds the types of the entities which have been defined as properties */
+        // TODO: In xtypes3.1 we will update this
         std::map< std::string, std::set< nl::json > > allowed_property_values; /* < if a property has been constrained, this map will contain all allowed values of that property */
 
         /// Checks whether the passed pointer is an instance of the base class

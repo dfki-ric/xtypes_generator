@@ -14,33 +14,34 @@ methods:
     returns:
       type: std::size_t
     description: "This function returns a hash of the uri() result"
-  export_to:
-    const: True
+  set_registry_once:
     arguments:
-      - name: recursion_limit
+      - name: reg
+        type: XTypeRegistryCPtr
+    description: "Sets the registry of the XType if not already set"
+  get_registry:
+    const: True
+    returns:
+      type: XTypeRegistryCPtr
+    description: "Returns the registry of this XType if set. Otherwise nullptr"
+  export_to:
+    arguments:
+      - name: max_depth
         type: INTEGER
         default: -1
-      - name: export_relation_properties
-        type: BOOLEAN
-        default: False
     returns:
       type: MAP(STRING, JSON)
-    description: "This function serializes an XType and its dependent XTypes to a certain depth"
+    description: "This function serializes an XType and its dependent XTypes URIs up to a certain depth"
   import_from:
     static: True
     arguments:
-      - name: toplvl_uri
-        type: STRING
-      - name: load_spec_by_uri
-        type: ImportByURIFunc
-      - name: project_registry
-        type: XTypeRegistry
-      - name: recursion_limit
-        type: INTEGER
-        default: -1
+      - name: spec
+        type: JSON
+      - name: reg
+        type: XTypeRegistryCPtr
     returns:
-      type: XTypePtr
-    description: "This function deserializes an XType and its dependent XTypes to a certain depth. Newly discovered references are loaded by an external function"
+      type: XTypeCPtr
+    description: "This function deserializes an XType including uri references to dependend XTypes"
   define_property:
     arguments:
       - name: name
@@ -67,6 +68,8 @@ methods:
     arguments:
       - name: name
         type: STRING
+    returns:
+      type: BOOLEAN
     description: "This function checks if a property with the given name has been defined"
   get_allowed_property_values:
     const: True
@@ -179,11 +182,19 @@ methods:
     returns:
       type: BOOLEAN
     description: "This method checks if a relation on the given name has been defined"
+
+  get_facts:
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+        type: VECTOR(Fact)
+    description: "This method resolves the facts and returns them"
   add_fact:
     arguments:
       - name: name
         type: STRING
-      - name: xtype
+      - name: other
         type: XTypeCPtr
       - name: props
         type: JSON
@@ -193,7 +204,7 @@ methods:
     arguments:
       - name: name
         type: STRING
-      - name: xtype
+      - name: other
         type: XTypeCPtr
     description: "Remove fact(s) with matching Xtype from an existing relation."
   has_facts:

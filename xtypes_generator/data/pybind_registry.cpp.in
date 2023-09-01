@@ -15,16 +15,5 @@ void PYBIND11_INIT_PROJECTREGISTRY(py::module_& m) {
     .def(py::init())
     {%- for classname in derived_classnames %}
     .def("register_class", &{{project_name}}::ProjectRegistry::register_class<{{project_name}}::{{classname}}>)
-    {% endfor -%}
-    .def("register_alias", &{{project_name}}::ProjectRegistry::register_alias)
-    .def("knows_class", &{{project_name}}::ProjectRegistry::knows_class)
-    .def("instantiate_from", &{{project_name}}::ProjectRegistry::instantiate_from)
-    .def("import_from", &{{project_name}}::ProjectRegistry::import_from)
-    {%- for classname in derived_classnames %}
-    .def("get_by_uri", &{{project_name}}::ProjectRegistry::get_by_uri<{{project_name}}::{{classname}}>, py::arg(("uri")))
-    {% endfor -%}
-    {%- for classname in derived_classnames %}
-    .def("hold", &{{project_name}}::ProjectRegistry::hold<{{project_name}}::{{classname}}>)
-    {% endfor -%}
-    .def("drop", &{{project_name}}::ProjectRegistry::drop);
+    {% endfor -%};
 }

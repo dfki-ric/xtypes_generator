@@ -17,135 +17,130 @@
 #include <string>
 #include <vector>
 
+/**
+ * XType v3
+ *
+ * * we need to store instances by uri
+ * * The registry will be a global entity (not constructed anymore inside the XTypes but passed by reference)
+ * * The registry defines and stores a function to load instances from some informations source (probably xdbi) if an XType with a certain uri cannot be found
+ */
+
 namespace xtypes
 {
     class XType;
 
+    /* Some good aliases */
+    using XTypePtr = std::shared_ptr< XType >;
+    using XTypeCPtr = const std::shared_ptr< XType >;
+    using ConstXTypePtr = std::shared_ptr< const XType >;
+    using ConstXTypeCPtr = const std::shared_ptr< const XType >;
+    using UniqueXTypePtr = std::unique_ptr< XType >;
+    using XTypeWeakPtr = std::weak_ptr< XType >;
+
     /// Base Class for the Registries of the XTypes and for the Project Registries in the XTypes specializing projects
-    struct XTypeRegistry
+    struct XTypeRegistry : public std::enable_shared_from_this<XTypeRegistry>
     {
         /// Factory constructor
-        XTypeRegistry()
-        {
-        }
+        XTypeRegistry();
+
+        // Need virtual destructor to become polymorphic (for pybind11)
+        virtual ~XTypeRegistry() = default;
+
+        /// *** Classes API ***
 
         /// Function to register a new XType
-        template <typename T>
-        void register_class()
-        {
-            if (knows_class(T::classname))
-                return;
-            _factories[T::classname] = []
-            { return std::make_unique<T>(); };
-        }
+        template <typename T> void register_class();
 
         /// Function to register an alias to an existing class (useful for conversions)
-        bool register_alias(const std::string &original, const std::string& alias)
-        {
-            if (!knows_class(original))
-                return false;
-            if (knows_class(alias))
-                return false;
-            _factories[alias] = _factories[original];
-            return true;
-        }
+        bool register_alias(const std::string& original, const std::string& alias);
 
         /// Check if a classname is known to the registry
-        bool knows_class(const std::string &with_name) const
-        {
-            if (_factories.find(with_name) != _factories.end())
-                return true;
-            return false;
-        }
-
-        /// Factory method to create an XType from string
-        std::shared_ptr<XType> instantiate_from(const std::string &classname)
-        {
-            if (knows_class(classname))
-            {
-                _instances.push_back(_factories.at(classname)());
-                return _instances.back();
-            }
-            return nullptr;
-        }
-
-        /// This function returns the XType with the given URI if it is held by the registry, otherwise returns nullptr
-        template <typename T>
-        std::shared_ptr<T> get_by_uri(const std::string &uri)
-        {
-            auto it = std::find_if(_instances.begin(), _instances.end(), [&uri](auto &inst)
-                                   { return inst->uri() == uri; });
-            if (it != _instances.end())
-                return std::static_pointer_cast<T>(*it);
-            return nullptr;
-        }
-
-        /// Factory method to create XType from C++ type
-        template <typename T>
-        std::shared_ptr<T> instantiate()
-        {
-            return std::static_pointer_cast<T>(instantiate_from(T::classname));
-        }
-
-        /** Function to insert a shared pointer to an XType instance
-         * Useful when the lifetime of the instance would be too short otherwise */
-        template <typename T>
-        void hold(const std::shared_ptr<T> &instance)
-        {
-            if (holds(instance))
-                return;
-            if (!knows_class(instance->get_classname()))
-                _factories[instance->get_classname()] = []
-                { return std::make_unique<T>(); };
-            _instances.push_back(instance);
-        }
-
-        /// Checks if an instance is held by the registry
-        bool holds(const std::shared_ptr<XType> &instance)
-        {
-            if (std::find(_instances.begin(), _instances.end(), instance) != _instances.end())
-                return true;
-            return false;
-        }
-
-        /// Removes instance from registry
-        void drop(const std::shared_ptr<XType> &instance)
-        {
-            if (holds(instance))
-                _instances.erase(std::remove(_instances.begin(), _instances.end(), instance), _instances.end());
-        }
-
-        /// Drop all instances
-        void clear()
-        {
-            _instances.clear();
-        }
+        bool knows_class(const std::string& with_name) const;
 
         /// Import factory functions from other registry
-        void import_from(const XTypeRegistry &other)
-        {
-            for (const auto &[classname, func] : other._factories)
-            {
-                if (knows_class(classname))
-                    continue;
-                _factories[classname] = func;
-                // TODO: Shall we import instances as well?
-            }
-        }
+        void import_from(const XTypeRegistry& other);
+
+        /// *** Instances API ***
+        /// NOTE: These functions DO not register any instance, ownership of the shared pointers is completely given to to the caller
+
+        /// Factory method to create an XType from string
+        XTypeCPtr instantiate_from(const std::string& classname);
+
+        /// Factory method to create XType from C++ type
+        template <typename T> const std::shared_ptr<T> instantiate();
+
+        /// *** Valid instances API ***
+        
+        /// This function tells us if an XType with a given URI is known to the registry
+        bool knows_uri(const std::string& uri) const;
+
+        /// If an XType has become valid (externally) it can be passed to the registry to be persistently stored
+        /// Then others can find this instance by uri
+        /// overwrite_if_exists speicifies if the content of the committed entity shall be copied over the existing one
+        bool commit(XTypeCPtr& instance, const bool overwrite_if_exists);
+
+        /// This function creates a new temporary object with the content of an valid instance in _valid_instances
+        XTypeCPtr get_by_uri(const std::string& uri);
+
+        /// This function will create a new temporary object from an external information source if not found by get_by_uri()
+        XTypeCPtr load_by_uri(const std::string& uri);
+
+        /// Defintion of a function to lookup unknown XTypes from some information source
+        // When we use lambdas, we can just catch the right registry and the right information source
+        using LoadByUriFunc = std::function< XTypePtr(const std::string& uri) >;
+
+        /// Set the load_func to be used by the registry to resolve an XType given the uri
+        void set_load_func(const LoadByUriFunc& f);
+
+        /// Removes an valid instance from registry
+        /// TODO: This could invalidate other dependent XTypes. Has to be handled!
+        void drop(const std::string& uri);
+
+        /// Drop all valid instances
+        void clear();
 
     private:
-        std::map<std::string, std::function<std::unique_ptr<XType>()>> _factories;
-        std::vector<std::shared_ptr<XType>> _instances;
+        // Factory function repository: classname -> factory function
+        std::map<std::string, std::function<UniqueXTypePtr()>> _factories;
+        // A function to load unknown XTypes from some information source
+        LoadByUriFunc _load_func;
+        // Every instantiated XType is registered here (might not be valid yet)
+        // analogous to GIT UNVERSIONED FILES
+        std::vector< XTypePtr > _temporary_instances;
+        // When a temporary copy of a valid instance is created it is registered here
+        // analogous to GIT MODIFIED FILES
+        std::map< std::string, XTypeWeakPtr > _valid_to_temporary;
+        // Map of uri to XType instances
+        // NOTE: This map GLOBALLY stores all XTypes committed to this registry
+        // Only XTypes with a valid uri can be stored in here (either loaded from DB or created and registered)
+        // analogous to GIT VERSIONED/COMMITTED FILES
+        std::map< std::string, XTypePtr > _valid_instances;
     };
 
     using XTypeRegistryPtr = std::shared_ptr<XTypeRegistry>;
+    using XTypeRegistryCPtr = const std::shared_ptr<XTypeRegistry>;
+    using ConstXTypeRegistryPtr = std::shared_ptr< const XTypeRegistry>;
+    using ConstXTypeRegistryCPtr = const std::shared_ptr< const XTypeRegistry>;
 
-    /// Specialization for XType
-    template <>
-    inline void XTypeRegistry::hold(const std::shared_ptr<XType> &instance)
+    /* Template functions */
+    // NOTE: We cannot directly access any XType specific stuff 
+    // inside these because of circular dependency between XType.hpp and XTypeRegistry.hpp
+
+    template <typename T> void XTypeRegistry::register_class()
     {
-        if (holds(instance))
+        if (knows_class(T::classname))
             return;
-        _instances.push_back(instance);
+        _factories[T::classname] = []{ 
+            return std::make_unique<T>();
+        };
     }
+
+    // This function is needed to automatically place a ref to the registry in new XTypes
+    // Do not remove or deprecate this
+    template <typename T> const std::shared_ptr<T> XTypeRegistry::instantiate()
+    {
+        return std::static_pointer_cast<T>(instantiate_from(T::classname));
+    }
+
 }
+

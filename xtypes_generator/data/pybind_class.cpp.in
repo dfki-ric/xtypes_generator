@@ -63,13 +63,6 @@ void PYBIND11_INIT_CLASS_{{classname.upper()}}(py::module_& m) {
         {%- if custom_uri %}
         .def("uri", &{{classname}}::uri)
         {%- endif %}
-        {%- if classname == "XType" %}
-        // get_facts
-        .def("get_facts", py::overload_cast<const std::string&>(&{{classname}}::get_facts),
-             py::arg("name"))
-        .def("get_facts", py::overload_cast<const std::string&>(&{{classname}}::get_facts, py::const_),
-             py::arg("name"))
-        {%- endif %}
         {%- for method_name, method in methods %}
         {%- if method[1] %}
         // Template overloading for {{method_name}}
