@@ -1,0 +1,297 @@
+# Built-in in CMake 3.5+
+include(CMakeParseArguments)
+
+macro(xtypes_project)
+  set(options
+    DEACTIVATE_PYTHON_BINDINGS # if you don't want to have the python bindings to your code
+    USE_LOCAL # only used for the build of this repository
+  )
+  set(oneValueArgs
+    SOURCE_DIRECTORY # the directory which contains include and src dirs. Default: ${CMAKE_CURRENT_SOURCE_DIR}
+    TEMPLATE_DIRECTORY # the template directory. Default: ${CMAKE_CURRENT_SOURCE_DIR}/templates/
+    PYBIND_DIRECTORY # the directory from where to include any further pybind files. Default: ${CMAKE_CURRENT_SOURCE_DIR}/pybind/
+    SKELETON_DIRECTORY  # the directory where ot write the skeleton files. Default: ${CMAKE_CURRENT_SOURCE_DIR}/skeleton_files/
+    AUTO_GEN_DIRECTORY # the directory where to put the generated files. Default: ${CMAKE_BINARY_DIR}/auto_generated_files
+    COLLECTED_DIRECTORY # the directory where to put the collected files. Default: ${CMAKE_BINARY_DIR}/build_files
+    NAMESPACE # The namespace to use
+  )
+  cmake_parse_arguments(XTYPES "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  if(NOT DEFINED XTYPES_SOURCE_DIRECTORY)
+    set(XTYPES_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
+  if(NOT DEFINED XTYPES_TEMPLATE_DIRECTORY)
+    set(XTYPES_TEMPLATE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/templates)
+  endif()
+  if(NOT DEFINED XTYPES_PYBIND_DIRECTORY)
+    set(XTYPES_PYBIND_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pybind)
+  endif()
+  if(NOT DEFINED XTYPES_AUTO_GEN_DIRECTORY)
+    set(XTYPES_AUTO_GEN_DIRECTORY ${CMAKE_BINARY_DIR}/auto_generated_files)
+  endif()
+  if(NOT DEFINED XTYPES_SKELETON_DIRECTORY)
+    set(XTYPES_SKELETON_DIRECTORY ${XTYPES_AUTO_GEN_DIRECTORY}/skeleton_files)
+  endif()
+  if(NOT DEFINED XTYPES_COLLECTED_DIRECTORY)
+    set(XTYPES_COLLECTED_DIRECTORY ${CMAKE_BINARY_DIR}/build_files)
+  endif()
+  if(NOT DEFINED XTYPES_NAMESPACE)
+    set(XTYPES_NAMESPACE ${PROJECT_NAME})
+  endif()
+
+  if (NOT DEFINED PYTHON_EXECUTABLE)
+     message(FATAL_ERROR ${PYTHON_EXECUTABLE})
+  endif()
+
+  if (${XTYPES_USE_LOCAL})
+    message(STATUS "Running xtypes_project in local mode")
+  endif()
+
+  ####################
+  # File generation #
+  ##################
+  message(STATUS "Autogenerating XType code from template files")
+  if (NOT ${XTYPES_USE_LOCAL})
+    execute_process(
+        COMMAND ${xtypes_generator_BINARY} types_generator --project_name ${XTYPES_NAMESPACE} --input ${XTYPES_TEMPLATE_DIRECTORY} --output ${XTYPES_AUTO_GEN_DIRECTORY} --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --overwrite_skeletons
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_DEPENDENCIES
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR
+    )
+  else()
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} xtypes_generator/xtypesgen.py types_generator --project_name ${XTYPES_NAMESPACE} --input ${XTYPES_TEMPLATE_DIRECTORY} --output ${XTYPES_AUTO_GEN_DIRECTORY} --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --overwrite_skeletons --do_not_create_project_registry
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_DEPENDENCIES
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR
+    )
+  endif()
+  if (NOT ${EXECUTE_PROCESS_ERROR} STREQUAL "")
+  message(FATAL_ERROR ${EXECUTE_PROCESS_ERROR})
+  endif()
+  message(STATUS "Depends on these other XTypes: ${XTYPES_DEPENDENCIES}")
+
+  message(STATUS "Autogenerating ProjectRegistry from template files")
+  if (NOT ${XTYPES_USE_LOCAL})
+    execute_process(
+      COMMAND ${xtypes_generator_BINARY} registry_generator --project_name ${XTYPES_NAMESPACE} --input_dir ${XTYPES_TEMPLATE_DIRECTORY} --output_dir ${XTYPES_AUTO_GEN_DIRECTORY} --dependencies "\"${XTYPES_DEPENDENCIES}\""
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_VARIABLE gen_out2
+      ERROR_VARIABLE EXECUTE_PROCESS_ERROR
+    )
+  # else()
+  #   execute_process(
+  #       COMMAND ${PYTHON_EXECUTABLE} xtypes_generator/xtypesgen.py registry_generator --project_name ${XTYPES_NAMESPACE} --input_dir ${XTYPES_TEMPLATE_DIRECTORY} --output_dir ${XTYPES_AUTO_GEN_DIRECTORY}
+  #       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  #       OUTPUT_VARIABLE gen_out2
+  #   )
+  endif()
+  if (NOT ${EXECUTE_PROCESS_ERROR} STREQUAL "")
+  message(FATAL_ERROR ${EXECUTE_PROCESS_ERROR})
+  endif()
+  message(STATUS ${gen_out2})
+
+  if (NOT ${XTYPES_USE_LOCAL})
+    execute_process(
+        COMMAND ${xtypes_generator_BINARY} get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${XTYPES_SOURCE_DIRECTORY} --files SKELETON_HEADERS --output_dir ${XTYPES_COLLECTED_DIRECTORY}/include -v
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_USED_SKEL_HEADERS
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR
+    )
+    execute_process(
+        COMMAND ${xtypes_generator_BINARY} get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${XTYPES_SOURCE_DIRECTORY} --files SKELETON_SOURCES --output_dir ${XTYPES_COLLECTED_DIRECTORY}/src -v
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_USED_SKEL_SOURCES
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR2
+    )
+  else()
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} xtypes_generator/xtypesgen.py get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${XTYPES_SOURCE_DIRECTORY} --files SKELETON_HEADERS --output_dir ${XTYPES_COLLECTED_DIRECTORY}/include -v
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_USED_SKEL_HEADERS
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR
+    )
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} xtypes_generator/xtypesgen.py get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${XTYPES_SOURCE_DIRECTORY} --files SKELETON_SOURCES --output_dir ${XTYPES_COLLECTED_DIRECTORY}/src -v
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE XTYPES_USED_SKEL_SOURCES
+        ERROR_VARIABLE EXECUTE_PROCESS_ERROR2
+    )
+  endif()
+  if (NOT ${EXECUTE_PROCESS_ERROR} STREQUAL "")
+  message(FATAL_ERROR ${EXECUTE_PROCESS_ERROR})
+  endif()
+  if (NOT ${EXECUTE_PROCESS_ERROR2} STREQUAL "")
+  message(FATAL_ERROR ${EXECUTE_PROCESS_ERROR2})
+  endif()
+
+  FILE(GLOB XTYPES_USER_SOURCES
+    ${XTYPES_SOURCE_DIRECTORY}/src/*.cpp
+    ${XTYPES_SOURCE_DIRECTORY}/src/*.c
+  )
+  FILE(GLOB XTYPES_USER_HEADERS
+    ${XTYPES_SOURCE_DIRECTORY}/include/*.hpp
+    ${XTYPES_SOURCE_DIRECTORY}/include/*.h
+  )
+  FILE(GLOB XTYPES_AUTO_GEN_SOURCES
+    ${XTYPES_AUTO_GEN_DIRECTORY}/src/*.cpp
+  )
+  FILE(GLOB XTYPES_AUTO_GEN_HEADERS
+    ${XTYPES_AUTO_GEN_DIRECTORY}/include/*.hpp
+  )
+
+  message(STATUS "Autogenerating XType code from template files")
+  if (NOT ${XTYPES_USE_LOCAL})
+    add_custom_target(generate_xtypes ALL
+        COMMAND ${xtypes_generator_BINARY} types_generator --project_name ${XTYPES_NAMESPACE} --input ${XTYPES_TEMPLATE_DIRECTORY} --output ${XTYPES_AUTO_GEN_DIRECTORY} --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --overwrite_skeletons
+    )
+  else()
+    add_custom_target(generate_xtypes ALL
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/xtypes_generator/xtypesgen.py types_generator --project_name ${XTYPES_NAMESPACE} --input ${XTYPES_TEMPLATE_DIRECTORY} --output ${XTYPES_AUTO_GEN_DIRECTORY} --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --overwrite_skeletons --do_not_create_project_registry
+    )
+  endif()
+
+  message(STATUS "Autogenerating ProjectRegistry from template files")
+  if (NOT ${XTYPES_USE_LOCAL})
+    add_custom_target(generate_xtype_registry ALL
+        COMMAND ${xtypes_generator_BINARY} registry_generator --project_name ${XTYPES_NAMESPACE} --input_dir ${XTYPES_TEMPLATE_DIRECTORY} --output_dir ${XTYPES_AUTO_GEN_DIRECTORY} --dependencies "\"${XTYPES_DEPENDENCIES}\""
+    )
+    add_custom_target(collect_user_defined_xtypes ALL
+        COMMAND ${xtypes_generator_BINARY} get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${CMAKE_CURRENT_SOURCE_DIR} --files SKELETON_HEADERS --output_dir ${XTYPES_COLLECTED_DIRECTORY}/include
+        COMMAND ${xtypes_generator_BINARY} get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${CMAKE_CURRENT_SOURCE_DIR} --files SKELETON_SOURCES --output_dir ${XTYPES_COLLECTED_DIRECTORY}/src
+    )
+    add_dependencies(collect_user_defined_xtypes generate_xtypes generate_xtype_registry)
+  else()
+    # add_custom_target(generate_xtype_registry ALL
+    #     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/xtypes_generator/xtypesgen.py registry_generator --project_name ${XTYPES_NAMESPACE} --input_dir ${XTYPES_TEMPLATE_DIRECTORY} --output_dir ${XTYPES_AUTO_GEN_DIRECTORY}
+    # )
+    add_custom_target(collect_user_defined_xtypes ALL
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/xtypes_generator/xtypesgen.py get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${CMAKE_CURRENT_SOURCE_DIR} --files SKELETON_HEADERS --output_dir ${XTYPES_COLLECTED_DIRECTORY}/include
+        COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_SOURCE_DIR}:$ENV{PYTHONPATH} ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/xtypes_generator/xtypesgen.py get_and_copy_files --skeleton_dir ${XTYPES_SKELETON_DIRECTORY} --user_dir ${CMAKE_CURRENT_SOURCE_DIR} --files SKELETON_SOURCES --output_dir ${XTYPES_COLLECTED_DIRECTORY}/src
+    )
+    add_dependencies(collect_user_defined_xtypes generate_xtypes)
+  endif()
+
+  foreach (_DEP ${XTYPES_DEPENDENCIES})
+    find_package(${_DEP} REQUIRED)
+  endforeach()
+  if (NOT ${XTYPES_USE_LOCAL})
+    find_package(@PROJECT_NAME@ @PROJECT_VERSION@ REQUIRED)
+  endif()
+
+  ################
+  # CPP LIBRARY #
+  ##############
+  set(XTYPES_CPP_TARGET ${PROJECT_NAME}_cpp)
+
+  add_library(${XTYPES_CPP_TARGET} SHARED ${XTYPES_USER_SOURCES} ${XTYPES_USED_SKEL_SOURCES} ${XTYPES_AUTO_GEN_SOURCES})
+
+  if(NOT DEFINED CMAKE_CXX_STANDARD)
+    target_compile_features(${XTYPES_CPP_TARGET} PUBLIC cxx_std_17) # Use C++17
+  elseif(CMAKE_CXX_STANDARD LESS 17)
+    message(WARNING "CMAKE_CXX_STANDARD is set to ${CMAKE_CXX_STANDARD}, XTypes will override this to 17")
+    target_compile_features(${XTYPES_CPP_TARGET} PUBLIC cxx_std_17) # Use C++17
+  endif()
+
+  target_include_directories(${XTYPES_CPP_TARGET}
+  	PUBLIC
+  		$<BUILD_INTERFACE:${XTYPES_SOURCE_DIRECTORY}/include>
+  		$<BUILD_INTERFACE:${XTYPES_SKELETON_DIRECTORY}/include>
+  		$<BUILD_INTERFACE:${XTYPES_AUTO_GEN_DIRECTORY}/include>
+  		$<INSTALL_INTERFACE:include>
+  )
+
+  target_link_libraries(${XTYPES_CPP_TARGET} PUBLIC
+  	nlohmann_json::nlohmann_json
+  )
+  foreach (_DEP ${XTYPES_DEPENDENCIES})
+    target_link_libraries(${XTYPES_CPP_TARGET} PUBLIC
+      ${_DEP}::${_DEP}_cpp
+    )
+  endforeach()
+  if (NOT ${XTYPES_USE_LOCAL})
+    target_link_libraries(${XTYPES_CPP_TARGET} PUBLIC
+    	@PROJECT_NAME@::@PROJECT_NAME@_cpp
+    )
+  endif()
+
+  add_dependencies(${XTYPES_CPP_TARGET} collect_user_defined_xtypes)
+
+  install(TARGETS ${XTYPES_CPP_TARGET} EXPORT ${PROJECT_NAME}-targets LIBRARY DESTINATION lib)
+  install(FILES ${XTYPES_USER_HEADERS} DESTINATION include/${PROJECT_NAME})
+  install(FILES ${XTYPES_AUTO_GEN_HEADERS} DESTINATION include/${PROJECT_NAME})
+  install(FILES ${XTYPES_USED_SKEL_HEADERS} DESTINATION include/${PROJECT_NAME})
+
+  ############################
+  # PYBIND11 Python Binding #
+  ##########################
+  if (NOT ${XTYPES_DEACTIVATE_PYTHON_BINDINGS})
+    set(XTYPES_PY_TARGET ${PROJECT_NAME}_py)
+
+    set(${PYBIND11_PYTHON_VERSION} ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
+    message(STATUS "Python version: ${PYBIND11_PYTHON_VERSION}")
+
+    FILE(GLOB PYBIND_SOURCES
+      ${XTYPES_SOURCE_DIRECTORY}/pybind/*.cpp
+      ${XTYPES_AUTO_GEN_DIRECTORY}/pybind/*.cpp
+    )
+    pybind11_add_module(${XTYPES_PY_TARGET} SHARED ${PYBIND_SOURCES})
+
+    target_include_directories(${XTYPES_PY_TARGET}
+    	PUBLIC
+    		${PYTHON_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(${XTYPES_PY_TARGET}
+    	PUBLIC
+    		${XTYPES_CPP_TARGET}
+    		${PYTHON_LIBRARIES}
+    		nlohmann_json::nlohmann_json
+    		pybind11::pybind11_headers
+    		pybind11_json
+    )
+    foreach (_DEP ${XTYPES_DEPENDENCIES})
+      target_link_libraries(${XTYPES_CPP_TARGET} PUBLIC
+        ${_DEP}::${_DEP}_cpp
+        ${_DEP}::${_DEP}_py
+      )
+    endforeach()
+    if (NOT ${XTYPES_USE_LOCAL})
+      target_link_libraries(${XTYPES_PY_TARGET}
+        PUBLIC
+          @PROJECT_NAME@::@PROJECT_NAME@_cpp
+          @PROJECT_NAME@::@PROJECT_NAME@_py
+      )
+    endif()
+
+    add_dependencies(${XTYPES_PY_TARGET} ${XTYPES_CPP_TARGET})
+    # When installing shared objects to an directory outside the default LD_LIBRARY_PATH, the default handling by cmake regarding the runtime path is not correct.
+    # Therefore we use for this target directly the link path.
+    # See https://stackoverflow.com/questions/32469953/why-is-cmake-designed-so-that-it-removes-runtime-path-when-installing and
+    # CMake Wiki: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+    set_target_properties(${XTYPES_PY_TARGET} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    install(TARGETS ${XTYPES_PY_TARGET} EXPORT ${PROJECT_NAME}-targets DESTINATION ${PYTHON_SITELIB_INSTALL_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  endif() # DEACTIVATE_PYTHON_BINDINGS
+  #######################
+  # find_package stuff #
+  #####################
+  install(EXPORT ${PROJECT_NAME}-targets NAMESPACE ${PROJECT_NAME}:: DESTINATION lib/cmake/${PROJECT_NAME})
+  if (${XTYPES_USE_LOCAL})
+    # Create and install package configuration and version files.
+    configure_file(
+       ${CMAKE_SOURCE_DIR}/cmake/config.cmake.in
+       ${XTYPES_AUTO_GEN_DIRECTORY}/cmake/${PROJECT_NAME}-config.cmake @ONLY)
+    file(COPY
+       ${CMAKE_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake DESTINATION
+       ${XTYPES_AUTO_GEN_DIRECTORY}/cmake)
+  # else()
+  #   # Create package configuration and version files.
+  #   configure_file(
+  #      ${CMAKE_INSTALL_PREFIX}/share/@PROJECT_NAME@/cmake/config.cmake.in
+  #      ${XTYPES_AUTO_GEN_DIRECTORY}/cmake/${PROJECT_NAME}-config.cmake @ONLY)
+  #
+  #   configure_file(
+  #      ${CMAKE_INSTALL_PREFIX}/share/@PROJECT_NAME@/cmake/config-version.cmake
+  #      ${XTYPES_AUTO_GEN_DIRECTORY}/cmake/${PROJECT_NAME}-config-version.cmake @ONLY)
+  endif()
+endmacro(xtypes_project)

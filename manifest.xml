@@ -1,0 +1,22 @@
+<package>
+    <description brief="XTypes Generator">
+        This package is a parser and C++ representation for the YAML-represented XTypes
+    </description>
+    <author>MODKOM-Team</author>
+    <author_email>modkom@dfki.de</author_email>
+    <maintainer>Henning Wiedemann/henning.wiedemann@dfki.de</maintainer>
+    <copyright></copyright>
+    <license></license>
+    <depend package="python3" />
+    <depend package="python3-jinja2" />
+    <depend package="python3-yaml" />
+    <depend package="pybind11" />
+    <depend package="pybind11_json" />
+    <depend package="nlohmann-json" />
+    <stage>0</stage>
+    <activity>active</activity>
+    <keywords>
+        <keyword>utilities</keyword>
+        <keyword>interface</keyword>
+    </keywords>
+</package>

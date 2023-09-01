@@ -1,0 +1,83 @@
+/**
+ * {{ generator_comment }}
+ */
+
+#pragma once
+#include <nlohmann/json.hpp>
+{%- for c in classes %}
+{%- if c != classname and "::" in c %}
+#include <{{c.replace("::", "/")}}.hpp>
+{%- endif %}
+{%- endfor %}
+
+{% if inherit and inherit != "XType" and "::" not in inherit -%}#include "{{inherit}}.hpp"{% elif inherit and inherit != "XType" %}#include <{{inherit.replace("::", "/")}}.hpp>{% else %}#include <xtypes_generator/XType.hpp>{% endif %}
+
+namespace nl = nlohmann;
+
+namespace {{project_name}} {
+    // Forward Declarations
+    {%- for c in classes %}{% if c != inherit and c != "XType" and "::" not in c%}
+    class {{ c }};
+    using {{ c }}Ptr = std::shared_ptr<{{ c }}>;
+    using {{ c }}CPtr = const std::shared_ptr<{{ c }}>;
+    using Const{{ c }}Ptr = std::shared_ptr<const {{ c }}>;
+    using Const{{ c }}CPtr = const std::shared_ptr<const {{ c }}>;
+    {% endif %}{% endfor %}
+
+  class _{{ classname }} : public {% if inherit -%}{{inherit}}{% else %}xtypes::XType{% endif %}
+    {
+        public:
+            /// Constructor
+            _{{ classname }}(const std::string& classname="{{project_name}}::{{classname}}");
+            {% if custom_uri %}
+            /// Custom URI generator (overrides default implementation in XType)
+            std::string uri() const override;
+            {%- endif %}
+
+            // Method Declarations
+            {%- for method_name, method in methods %}
+            /// {{method[0]}}
+            {%- if method[1] %}
+            {%- for ttype in method[7] %}
+            {% if method[6] %}static {% endif %}{% if not method[6] %}virtual {% endif %}{{method[5] if not method[4] else ttype}} {{method_name}}(
+            {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0] if not arg[2] else ttype}}{%- else %}{{(arg[0] if not arg[2] else ttype).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0] if not arg[2] else ttype) not in classes -%}&{%- endif %} {{arg_name}}
+            {%- if arg[1] %} = {{arg[1]}}
+            {%- endif %}
+            {%- if not loop.last %}, {% endif %}
+            {%- endfor %}){% if method[8] and not method[6] %} const{% endif %}{% if not method[6] %} = 0{% endif -%}
+            {%- if method[6] %}
+            {
+                  throw std::bad_function_call();
+            }
+            {%- else -%};{%- endif %}
+            {%- endfor -%}
+            {%- else %}
+            {% if method[6] %}static {% endif %}{% if not method[6] %}virtual {% endif %}{{method[5]}} {{method_name}}(
+            {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0]}}{%- else %}{{(arg[0]).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if not arg[5] -%}&{%- endif %} {{arg_name}}
+            {%- if arg[1] %} = {{arg[1]}}
+            {%- endif %}
+            {%- if not loop.last %}, {% endif %}
+            {%- endfor %}){% if method[8] and not method[6] %} const{% endif %}{% if not method[1] and not method[6] %} = 0{% endif -%}
+            {%- if method[6] %}
+            {
+              throw std::bad_function_call();
+            }
+            {%- else -%};{%- endif -%}
+            {%- endif %}
+            {% endfor %}
+
+            // Setters/Getters for properties
+            {%- for prop_name, prop in properties.items() %}
+            const {{prop[3]}} get_{{prop_name}}() const { return this->get_property("{{prop_name}}"); }
+            virtual void set_{{prop_name}}(const {{prop[3]}}& value) { this->set_property("{{prop_name}}", value); }
+            {%- if loop.last %};{% endif %}
+            {%- endfor %}
+
+            // Convenience functions to state fact(s)
+            {%- for rel_name, rel in relations.items() %}
+            {%- for cname in rel[1] %}
+            virtual void add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props={});
+            {%- endfor %}
+            {%- endfor %}
+    };
+}

@@ -1,0 +1,113 @@
+# Name of the new XType class
+name: Template
+
+# Optional property
+inherit: AnotherXType # Makes this XType a child class of AnotherXType
+
+# Properties of the new XType class
+# Allowed properties data types are:
+#STRING
+#INTEGER
+#INTEGER64
+#BOOLEAN
+#FLOAT
+#FLOAT64
+#MAP(T1, T2)
+#ANY
+#VECTOR(T)
+#XTYPE(T)
+# Properties can have a 'default' value and a set of 'allowed' values.
+properties:
+  a_string:
+    type: STRING
+    default: "\"DEFAULT\""
+    advanced_setter: True # will make the setter overridable in the skeleton files
+  a_small_integer:
+    type: INTEGER
+    default: 0
+  a_big_integer:
+    type: INTEGER64
+    default: 0
+  a_boolean:
+    type: BOOLEAN
+    default: false
+  a_small_float:
+    type: FLOAT
+    default: 0.0
+  a_big_float:
+    type: FLOAT64
+    default: 0.0
+  a_vector_of_ints:
+    type: VECTOR(INTEGER)
+    # FIXME: This is a bad default value ... it should be [1,2,3] and be converted to a proper initializer list (in case of C++)
+    default: "{1,2,3}"
+  an_enum:
+    type: STRING
+    default: "\"B\""
+    allowed: ["\"A\"","\"B\"","\"C\""]
+
+# Relations to other XType classes
+# At first we have the local name of the relation (as an vector holding all XTypes targeted by the relation's facts)
+# type: specifies the name of the relation (e.g. HAS, ...)
+# subtype_of: specifies the name of an upper relation type (e.g. NEEDS subtype_of HAS)
+# other_classnames: specifies which other XTypes can be inside the relation
+# cardinality: Specifies the constraints on the cardianlity of the domain and codomain of a relation.
+#              Can be ONE2ONE, ONE2MANY, MANY2ONE or MANY2MANY
+# delete_policy: Specifies if the removal of either the source or the target of a fact triggers the removal of the other.
+#                Can be DELETENONE, DELETESOURCE, DELETETARGET or DELETEBOTH
+# inverse: Marks a relation definition as being an inverse relation. Consider A-HAS->B then B could specify B<-HAS-A by setting inverse to true
+#          Note, that relations are defined always in FORWARD direction. This especially important for the cardinality constraint.
+# properties: Specifies the default properties on a fact of a relation
+# advanced_setter: Some relations need additional checking when adding facts. If this is true add_* functions will be overridden
+# Possible relation definitions are defined in ...
+relations:
+  children:
+    type: HAS
+    other_classnames:
+      - Template
+    cardinality: ONE2MANY
+    delete_policy: DELETETARGET
+    inverse: false
+    properties: {}
+    advanced_setter: True # will make the setter overridable in the skeleton files
+  parent:
+    type: HAS
+    other_classnames:
+      - other_xtype_project::XTypeClass  # you can include classes from other projects by simply prefixing the namespace
+    cardinality: ONE2MANY
+    delete_policy: DELETETARGET
+    inverse: true
+    properties: {}
+# Definition of uuid generation
+# If this is missing, a random UUID is been assigned to this XType on construction
+uuid:
+  scheme: a_scheme
+  root_path: /and/a/path/to
+  from:
+    - name: parent
+      required: false
+    - name: a_string
+    - name: a_small_integer
+# Member functions/methods of this XType
+methods:
+  a_very_simple_method:
+    description: "I dont take anything and return nothing"
+  a_const_method:
+    const: True
+    description: "Ain't do a thing here, yo. Maybe print somethin."
+  a_static_method:
+    description: "I dont take anything and return nothing"
+    static: true
+  a_method:
+    arguments:
+      - name: a_string
+        type: STRING
+        default: "\"DEFAULT\""
+      - name: a_bool
+        type: BOOLEAN
+        default: True
+      - name: a_xtype
+        type: XTYPE(Template)
+    description: "A description of what a_method should do"
+    returns:
+      type: XTYPE(TemplatePtr)

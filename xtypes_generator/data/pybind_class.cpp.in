@@ -1,0 +1,108 @@
+/**
+ * {{ generator_comment }}
+ */
+
+
+#include <pybind11/pybind11.h>
+#include <nlohmann/json.hpp>
+#include <pybind11_json/pybind11_json.hpp>
+#include <pybind11/stl.h>
+#include <pybind11/complex.h>
+#include <pybind11/functional.h>
+#include <pybind11/chrono.h>
+
+#include "{{classname}}.hpp"
+
+{%- if classname == "XType" %}
+#include "XTypeRegistry.hpp"
+// NOTE: std::weak ptr is not supported by default in pybind11 and requires custom implementation as shown below...
+PYBIND11_DECLARE_HOLDER_TYPE(T, std::weak_ptr<T>);
+// Only needed if the type's `.get()` goes by another name
+namespace pybind11 { namespace detail {
+    template <typename T>
+    struct holder_helper<std::weak_ptr<T>> { // <-- specialization
+        static const T *get(const std::weak_ptr<T> &p) { return p.lock().get(); }
+    };
+}}
+{%- endif %}
+
+{%- if inherit and inherit not in classes %}
+{%- if inherit == "XType" %}
+#include <xtypes_generator/XType.hpp>
+{% elif "::" in inherit %}
+#include <{{inherit.replace("::", "/")}}.hpp>
+{% else %}
+#include "{{inherit}}.hpp"
+{%- endif %}
+{%- endif %}{%- for c in classes %}
+{%- if c != classname %}
+{%- if c == "XType" %}
+#include <xtypes_generator/XType.hpp>
+{% elif "::" in c %}
+#include <{{c.replace("::", "/")}}.hpp>
+{% else %}
+#include "{{c}}.hpp"
+{%- endif %}
+{%- endif %}
+{% endfor %}
+
+namespace py = pybind11;
+namespace nl = nlohmann;
+
+using namespace xtypes;
+{%- if classname != "XType" %}
+using namespace {{project_name}};
+{%- endif %}
+
+PYBIND11_EXPORT
+void PYBIND11_INIT_CLASS_{{classname.upper()}}(py::module_& m) {
+    // NOTE: The 3rd argument is a different default holder. Default is std::unique_ptr but we need std::shared_ptr.
+     py::class_<{{classname}}{%- if classname != "XType" and not inherit%}, xtypes::XType{%- elif inherit and classname != inherit%}, {{inherit}}{%- endif %}, std::shared_ptr<{{classname}}> >(m, "{{classname}}")
+        .def(py::init<>())
+        .def(py::init<const std::string&>())
+        {%- if custom_uri %}
+        .def("uri", &{{classname}}::uri)
+        {%- endif %}
+        {%- if classname == "XType" %}
+        // get_facts
+        .def("get_facts", py::overload_cast<const std::string&>(&{{classname}}::get_facts),
+             py::arg("name"))
+        .def("get_facts", py::overload_cast<const std::string&>(&{{classname}}::get_facts, py::const_),
+             py::arg("name"))
+        {%- endif %}
+        {%- for method_name, method in methods %}
+        {%- if method[1] %}
+        // Template overloading for {{method_name}}
+        {%- for ttype in method[7] %}
+        .def{% if method[6] %}_static{% endif %}("{{method_name}}", py::overload_cast<{%- for arg_name, arg in method[3] %}const {% if not arg[3] -%}{{arg[0] if not arg[2] else ttype}}{%- else %}{{(arg[0] if not arg[2] else ttype).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0] if not arg[2] else ttype) not in classes -%}&{%- endif %}{%- if not loop.last %}, {% endif %}{% endfor %}>(&{{classname}}::{{method_name}})
+        {%- for arg_name, arg in method[ 3 ] %},
+             py::arg("{{arg_name}}"){% if arg[1] %} = {{arg[1]}}{% endif %}
+        {%- endfor %})
+        {%- endfor %}
+        {%- elif method[9] %}
+        .def{% if method[6] %}_static{% endif %}("{{method_name}}", py::overload_cast<{%- for arg_name, arg in method[3] %}const {% if not arg[3] -%}{{arg[0]}}{%- else %}{{(arg[0]).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0]) not in classes -%}&{%- endif %}{%- if not loop.last %}, {% endif %}{% endfor %}>(&{{classname}}::{{method_name}})
+        {%- for arg_name, arg in method[ 3 ] %},
+             py::arg("{{arg_name}}"){% if arg[1] %} = {{arg[1]}}{% endif %}
+        {%- endfor %})
+        {%- else %}
+        .def{% if method[6] %}_static{% endif %}("{{method_name}}", &{{classname}}::{{method_name}}
+        {%- for arg_name, arg in method[ 3 ] %},
+             py::arg("{{arg_name}}"){% if arg[1] %} = {{arg[1]}}{% endif %}
+        {%- endfor %})
+        {%- endif %}
+        {%- endfor %}
+        {%- for rel_name, rel in relations.items() %}
+        {%- if rel[1]|length > 1 %}
+        {%- for cname in rel[1] %}
+        .def("add_{{rel_name}}", py::overload_cast<const {{cname}}Ptr, const nl::json&>(&{{classname}}::add_{{rel_name}}),
+            py::arg("xtype"), py::arg("props") = nl::json{})
+        {%- endfor %}
+        {%- else %}
+        .def("add_{{rel_name}}", &{{classname}}::add_{{rel_name}},
+            py::arg("xtype"), py::arg("props") = nl::json{})
+        {%- endif %}
+        {%- endfor %}
+        {%- for prop_name in properties.keys() %}
+        .def_property("{{prop_name}}", &{{classname}}::get_{{prop_name}}, &{{classname}}::set_{{prop_name}})
+        {%- endfor %};
+}

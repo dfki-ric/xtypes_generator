@@ -1,0 +1,455 @@
+name: XType
+# NOTE: Do not add a 'uuid' section here. For the basic Xtype this always has to be the standard/default implementation
+methods:
+  get_classname:
+    const: True
+    returns:
+      type: STRING
+    description: "Returns the classname of this XType"
+  uri:
+    returns:
+      type: STRING
+    description: "This function returns an URI for XTypes which might depend on properties and relations to other XTypes"
+  uuid:
+    returns:
+      type: std::size_t
+    description: "This function returns a hash of the uri() result"
+  export_to:
+    const: True
+    arguments:
+      - name: recursion_limit
+        type: INTEGER
+        default: -1
+      - name: export_relation_properties
+        type: BOOLEAN
+        default: False
+    returns:
+      type: MAP(STRING, JSON)
+    description: "This function serializes an XType and its dependent XTypes to a certain depth"
+  import_from:
+    static: True
+    arguments:
+      - name: toplvl_uri
+        type: STRING
+      - name: load_spec_by_uri
+        type: ImportByURIFunc
+      - name: project_registry
+        type: XTypeRegistry
+      - name: recursion_limit
+        type: INTEGER
+        default: -1
+    returns:
+      type: XTypePtr
+    description: "This function deserializes an XType and its dependent XTypes to a certain depth. Newly discovered references are loaded by an external function"
+  define_property:
+    arguments:
+      - name: name
+        type: STRING
+      - name: type
+        type: JSONTYPE
+        default: "nl::json::value_t::discarded"
+      - name: allowed_values
+        type: SET(JSON)
+        default: "std::set<nl::json>{}"
+      - name: default_value
+        type: JSON
+      - name: override
+        type: BOOLEAN
+        default: False
+    description: "This methods defines a property and sets its default value"
+  get_property_type:
+    const: True
+    returns:
+      type: JSONTYPE
+    description: "This methods defines a property and sets its default value"
+  has_property:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    description: "This function checks if a property with the given name has been defined"
+  get_allowed_property_values:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: SET(JSON)
+    description: "This function returns the allowed values for a property with the given name"
+  is_allowed_value:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+      - name: value
+        type: STRING
+    returns:
+      type: BOOLEAN
+    description: "Checks if a given value can be set for a possibly restricted property"
+  get_property:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: JSON
+    description: "This method returns the property with the given name"
+  set_property:
+    arguments:
+      - name: name
+        type: STRING
+      - name: value
+        type: JSON
+      - name: shall_throw
+        type: BOOLEAN
+        default: True
+    description: "This method sets the property with the given name (and checks type safety)"
+  get_properties:
+    const: True
+    returns:
+      type: JSON
+    description: "This method returns all defined properties"
+  set_properties:
+    arguments:
+      - name: properties
+        type: JSON
+      - name: shall_throw
+        type: BOOLEAN
+        default: True
+    returns:
+      type: JSON
+    description: "This method sets all defined properties with the given properties. It checks property existence and type safety."
+
+  define_relation:
+    arguments:
+      - name: name
+        type: STRING
+      - name: relation_type
+        type: RelationType
+      - name: from_classnames
+        type: SET(STRING)
+      - name: to_classnames
+        type: SET(STRING)
+      - name: constraint
+        type: Constraint
+        default: "Constraint::MANY2MANY"
+      - name: delete_policy
+        type: DeletePolicy
+        default: "DeletePolicy::DELETENONE"
+      - name: default_properties
+        type: JSON
+        default: "nl::json{}" 
+      - name: super_relation_type
+        type: RelationType
+        default: "RelationType::NONE"
+      - name: inverse
+        type: BOOLEAN
+        default: False
+      - name: override
+        type: BOOLEAN
+        default: False
+    description: "This methods creates a new relation definition to be filled by facts."
+
+  get_relations:
+    const: True
+    returns:
+      type: MAP(STRING,MAP(STRING, Relation))
+    description: "Returns a map of all defined named relations to other XType(s)"
+  get_relation:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: Relation
+    description: "Returns a named relation to other XType(s)"
+  get_relations_dir:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: BOOLEAN
+    description: "Returns true if the relation of the given name points forward and false otherwise"
+  has_relation:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: BOOLEAN
+    description: "This method checks if a relation on the given name has been defined"
+  add_fact:
+    arguments:
+      - name: name
+        type: STRING
+      - name: xtype
+        type: XTypeCPtr
+      - name: props
+        type: JSON
+        default: "nl::json{}"
+    description: "Add a fact to an existing relation. Will automatically fill matching/inverse relations."
+  remove_fact:
+    arguments:
+      - name: name
+        type: STRING
+      - name: xtype
+        type: XTypeCPtr
+    description: "Remove fact(s) with matching Xtype from an existing relation."
+  has_facts:
+    const: True
+    arguments:
+      - name: name
+        type: STRING
+    returns:
+      type: BOOLEAN
+    description: "This method checks if some facts are known (can be empty) on a relation with the given name"
+  set_unknown_fact_empty:
+    arguments:
+      - name: name
+        type: STRING
+    description: "Initialize an UNKNOWN fact to be KNOWN and EMPTY"
+  set_all_unknown_facts_empty:
+    description: "Initializes all UNKNOWN facts to be KNOWN and EMPTY"
+
+  # The following methods are predefined relation definitions
+  HAS:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  PART_OF_COMPOSITION:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  SUBCLASS_OF:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  INSTANCE_OF:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  CONNECTED_TO:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  ALIAS_OF:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  NEEDS:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  PROVIDES:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  CONTAINED_BY:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  EXISTS_IN:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  GENERATED:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  DEPENDS_ON:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  CONSTRAINED_BY:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  INTERFACE_TO:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  SPANS:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse>
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  HAS_UNIQUE:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  ANNOTATES:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  ATTACHED_TO:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  CAN_SAMPLE:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False
+  CONDITIONABLE_ON:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False

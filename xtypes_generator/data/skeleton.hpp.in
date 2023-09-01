@@ -1,0 +1,72 @@
+/**
+ * {{ generator_comment }}
+ */
+
+#pragma once
+#include "_{{classname}}.hpp"
+
+
+namespace {{project_name}} {
+    // Forward Declarations
+    {%- for c in classes %}
+    {%- if c != classname and c != inherit and "::" not in c%}
+    class {{ c }};
+    using {{ c }}Ptr = std::shared_ptr<{{ c }}>;
+    using {{ c }}CPtr = const std::shared_ptr<{{ c }}> ;
+    using Const{{ c }}Ptr = std::shared_ptr<const {{ c }}> ;
+    using Const{{ c }}CPtr = const std::shared_ptr<const {{ c }}> ;
+    {% endif %}
+    {% endfor %}
+
+    class {{ classname }} : public _{{ classname }}
+    {
+        public:
+            /// Constructor
+            {{ classname }}(const std::string& classname = {{classname}}::classname);
+
+            // Static indentifier
+            /// Useful to lookup the derived classname at compile time
+            static const std::string classname;
+
+            // Method Declarations
+            {%- for method_name, method in methods %}
+            /// {{method[0]}}
+            {%- if method[1] %}
+            {%- for ttype in method[7] %}
+            {% if method[6] %}static {% endif %}{% if not method[6] %}virtual {% endif %}{{method[5] if not method[4] else ttype}} {{method_name}}(
+            {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0] if not arg[2] else ttype}}{%- else %}{{(arg[0] if not arg[2] else ttype).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0] if not arg[2] else ttype) not in classes -%}&{%- endif %} {{arg_name}}
+            {%- if arg[1] %} = {{arg[1]}}
+            {%- endif %}
+            {%- if not loop.last %}, {% endif %}
+            {%- endfor %}){% if method[8] and not method[6] %} const{% endif %};
+            {%- endfor -%}
+            {%- else %}
+            {% if method[6] %}static {% endif %}{% if not method[6] %}virtual {% endif %}{{method[5]}} {{method_name}}(
+            {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0]}}{%- else %}{{(arg[0]).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if not arg[5] -%}&{%- endif %} {{arg_name}}
+            {%- if arg[1] %} = {{arg[1]}}
+            {%- endif %}
+            {%- if not loop.last %}, {% endif %}
+            {%- endfor %}){% if method[8] and not method[6] %} const{% endif %};
+            {%- endif %}
+            {% endfor %}
+            // Overrides for setters of properties
+            {%- for prop_name, prop in properties.items() %}
+            {%- if prop[4] %}
+            virtual void set_{{prop_name}}(const {{prop[3]}}& value);
+            {%- endif%}
+            {%- endfor %}
+            // Overrides for relation setters
+            {%- for rel_name, rel in relations.items() %}
+            {%- if rel[7] %}
+            {%- for cname in rel[1] %}
+            virtual void add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props={});
+            {%- endfor %}
+            {%- endif%}
+            {%- endfor %}
+    };
+
+    using {{ classname }}Ptr = std::shared_ptr<{{ classname }}>;
+    using {{ classname }}CPtr = const std::shared_ptr<{{ classname }}> ;
+    using Const{{ classname }}Ptr = std::shared_ptr<const {{ classname }}> ;
+    using Const{{ classname }}CPtr = const std::shared_ptr<const {{ classname }}> ;
+}

@@ -1,0 +1,32 @@
+/**
+ * {{ generator_comment }}
+ */
+
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+void PYBIND11_INIT_ENUMS(py::module_ &);
+void PYBIND11_INIT_STRUCTS(py::module_ &);
+void PYBIND11_INIT_UTILS(py::module_ &);
+{%- for classname in classnames %}
+void PYBIND11_INIT_CLASS_{{classname.upper()}}(py::module_ &);
+{%- endfor %}
+void PYBIND11_INIT_REGISTRY(py::module_ &);
+{%- if create_project_registry %}
+void PYBIND11_INIT_PROJECTREGISTRY(py::module_ &);
+{%- endif %}
+
+PYBIND11_MODULE({{project_name}}_py, m) {
+  PYBIND11_INIT_ENUMS(m);
+  PYBIND11_INIT_STRUCTS(m);
+  PYBIND11_INIT_UTILS(m);
+  {%- for classname in classnames %}
+  PYBIND11_INIT_CLASS_{{classname.upper()}}(m);
+  {%- endfor %}
+  PYBIND11_INIT_REGISTRY(m);
+  {%- if create_project_registry %}
+  PYBIND11_INIT_PROJECTREGISTRY(m);
+  {%- endif %}
+}

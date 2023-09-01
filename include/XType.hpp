@@ -1,0 +1,332 @@
+#pragma once
+
+#include <nlohmann/json.hpp>
+#include <functional>
+#include <stdexcept>
+#include <vector>
+#include <memory>
+#include <string>
+#include <map>
+#include <set>
+
+#include "enums.hpp"
+#include "structs.hpp"
+#include "XTypeRegistry.hpp"
+namespace nl = nlohmann;
+namespace xtypes {
+    /*Forward declarations*/
+    class XType;
+
+    /* Some good aliases */
+
+    using XTypePtr = std::shared_ptr< XType >;
+    using XTypeCPtr = const std::shared_ptr< XType >;
+    using ConstXTypePtr = std::shared_ptr< const XType >;
+    using ConstXTypeCPtr = const std::shared_ptr< const XType >;
+    using ImportByURIFunc =  std::function< nl::json(const std::string&) >;
+    using URI2Spec = std::map< std::string, nl::json >;
+    using XTypeRegistryPtr = std::shared_ptr< XTypeRegistry >;
+
+    /** Base class for all XType specializations.
+     * XTypes are an object oriented type definition which like a normal class hold properties and can have member functions;
+     * but further more they can hold relations to other XTypes. */
+    class XType : public std::enable_shared_from_this<XType>
+    {
+    public:
+        XType(const std::string& classname = XType::classname);
+
+        /// The constant identifier of this class
+        static const std::string classname;
+
+        /** This function returns the classname reported back from derived classes.
+         * Useful for lookup from base class to derived class. */
+        std::string get_classname() const noexcept;
+
+        /// This method is modified by each derived type (see xtypes_generator)
+        virtual std::string uri() const;
+
+        /// URI comparison for usage of XTypes
+        virtual bool operator==(const XType& other) const { return this->uri() == other.uri(); };
+        virtual bool operator!=(const XType& other) const { return !(*this == other); };
+        virtual bool operator<(const XType& other) const { return this->uri() < other.uri(); };
+        virtual bool operator>(const XType& other) const { return other < *this; };
+        virtual bool operator<=(const XType& other) const { return !(*this > other); };
+        virtual bool operator>=(const XType& other) const { return !(*this < other); };
+
+        /// This method has to always return an up-to-date hash of the current uri
+        std::size_t uuid() const;
+
+        /* De-/Serialization from/to JSON */
+
+        /** Exports an XType, its dependencies and related XTypes to a map from XType uuid to json dictionary which could be dumped to a file
+         * NOTE: This function is part of the basis for a json based XType database
+         * @param recursion_limit == 0: Only the current XType properties AND relations (dependent XType URIs) are exported
+         *        recursion_limit == 1: Current XType and neighbours are fully exported
+         *        recursion_limit > 1: and so forth
+         * @param whether we export the properties of the Facts/Relations as well
+         */
+        URI2Spec export_to(const int recursion_limit = -1, const bool export_relation_properties=false) const;
+
+        /** Import an XType from a json specification. If dependent XTypes are to be resolved, there has to be a function loading new specs by URI string
+         * NOTE: This function is part of the basis for a json based XType database
+         * NOTE: We do use the registry of the top-lvl XType to store all the dependent/instantiated XTypes
+         * TODO: std::function is very slow (see https://vittorioromeo.info/index/blog/passing_functions_to_functions.html). We should use something like the proposed function_view/function_ref
+         * @param The URI of the top level XType
+         * @param A Function pointer that provides the XType from URI
+         * @param The registry instance that holds the project XType specializations
+         * @param The recursion_limit for loading XTypes
+         */
+        static XTypePtr import_from(const std::string& toplvl_uri, ImportByURIFunc load_spec_by_uri, XTypeRegistry& project_registry, const int recursion_limit=-1);
+
+        /* Property Interface */
+
+        // This function is used to define that a property with 'name' and 'default_value'
+        //void define_property(const std::string& name, const nl::json& default_value, const nl::json::value_t& type=nl::json::value_t::discarded, const bool& override = false);
+
+        /** This function is used to define a property with a 'name', a 'type', 'allowed_values' and a 'default_value'.
+         * The 'override' parameter would override properties defined in an intermediate base class
+         * @param The name of the property
+         * @param (optional) The type of the value this property accepts
+         * @param (optional) The allowed values
+         * @param (optional) The default value
+         * @param (optional, default = false) Whether we redefine the previously vision
+         */
+        void define_property(const std::string& name,
+                             const nl::json::value_t& type=nl::json::value_t::discarded,
+                             const std::set<nl::json>& allowed_values = {},
+                             const nl::json& default_value = {},
+                             const bool& override = false);
+
+        /// This function checks if a property has been defined
+        bool has_property(const std::string& name) const;
+
+        /// This function is used to get the type of a property
+        nl::json::value_t get_property_type(const std::string& name) const;
+
+        /// Checks if a value can be assigned to a property
+        bool is_type_matching(const std::string& name, const nl::json& value);
+
+        /// This function is used to get the allowed values of a property
+        std::set<nl::json> get_allowed_property_values(const std::string& name) const;
+
+        /// Checks if a value can be assigned to a property
+        bool is_allowed_value(const std::string& name, const nl::json& value);
+
+        /** This function sets a new value to an DEFINED property (see has_property)
+          * @param The name of the property
+          * @param The new_value for this property
+          * @param Whether we ensure the type correctness
+         */
+        void set_property(const std::string& name, const nl::json& new_value, const bool shall_throw = true);
+
+        /// This function gets the current value of an DEFINED property
+        nl::json get_property(const std::string& name) const;
+
+        /// Returns all the DEFINED properties of the XType
+        nl::json get_properties() const;
+
+        /** Set all matching properties at once. If shall_throw is true, an exception is triggered iff properties do not match.
+         * @param A json map from name to value
+         * @param Whether we ensure the type correctness
+         */
+        void set_properties(const nl::json& properties, const bool shall_throw = true);
+
+        /* Relation Interface */
+
+        /** General function to define any relation. See below for predefined relations using this function internally.
+         * NOTE: Moved here from Schema.hpp
+         * @param The name for the new relation
+         * @param The relation type (a name like "has", "is-a" etc.)
+         * @param Defines the type(s) of XType on the from side of the relation
+         * @param Defines the type(s) of XType on the to side of the relation
+         * @param Cardinaltiy Constraint
+         * @param DeletePolicy
+         * @param The properties of this relation (will be stored in the resulting fact)
+         * @param If this relation is a subrelation of another pass here the other's relation type (see relation_type)
+         * @param Whether this relation is defined on the to side
+         * @param Whether we override an existing relation under this name
+         */
+        void define_relation(const std::string& name,
+                          const RelationType& relation_type,
+                          std::set<std::string> from_classnames,
+                          std::set<std::string> to_classnames,
+                          const Constraint& constraint = Constraint::MANY2MANY,
+                          const DeletePolicy& delpolicy = DeletePolicy::DELETENONE,
+                          const nl::json& properties = {},
+                          const RelationType& super_relation_type = RelationType::NONE,
+                          const bool& inverse = false,
+                          const bool& override = false);
+
+        /// Checks if a relation has been defined under the given attribute name or not
+        bool has_relation(const std::string& name) const;
+
+        /// Returns all the currently defined relations on the XType
+        std::map<std::string, Relation> get_relations() const;
+
+        /// Get the relation definition for the given attribute name
+        Relation get_relation(const std::string& name) const;
+
+        /// Get the direction in which the attribute gets filled with dependent XType(s)
+        /// true if points forward, false otherwise
+        bool get_relations_dir(const std::string& name) const;
+
+        /* Facts Interface (Facts are Instances of Relations) */
+
+        /* Check if facts related to name exist or not
+         * NOTE: This is NOT to confused with has_relation which checks if a DEFINITION for a relation exists.
+         * The facts would be instances of that relation definition (and do not necessarily have to exist) */
+        bool has_facts(const std::string& name) const;
+
+        /// Retrieve all the facts currently stored in the given named attribute
+        std::vector< Fact >& get_facts(const std::string& name);
+        const std::vector< Fact >& get_facts(const std::string& name) const;
+
+        /** Add a fact to the named relation
+         *  @param The name of the relation
+         *  @param The target XType
+         *  @param The fact properties
+         */
+        void add_fact(const std::string& name, XTypeCPtr xtype, const nl::json& props={});
+
+        /**
+         *  Remove a fact from a named relation
+         *  @param The name of the relation
+         *  @param The target XType
+         */
+        void remove_fact(const std::string& name, XTypeCPtr xtype);
+
+        /// Initialize an UNKNOWN fact to be KNOWN and EMPTY
+        void set_unknown_fact_empty(const std::string& name);
+
+        /// Initializes all UNKNOWN facts to be KNOWN and EMPTY
+        void set_all_unknown_facts_empty();
+
+        /* Predefined relations */
+        void HAS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            // HINT: This function creates the correct attribute and defines an 'add_<name>' function to access it with constraints checking
+            define_relation(name, RelationType::HAS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::NONE, inverse, override);
+        }
+
+        void PART_OF_COMPOSITION(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::PART_OF_COMPOSITION, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        // 2022-09-22 MS: Changed constraint to MANY2MANY to allow multiple inheritance
+        void SUBCLASS_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::SUBCLASS_OF, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+        void IMPLEMENTS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::IMPLEMENTS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+        void INSTANCE_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::INSTANCE_OF, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void CONNECTED_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CONNECTED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void ALIAS_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::ALIAS_OF, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void NEEDS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::NEEDS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::HAS, inverse, override);
+        }
+
+        void PROVIDES(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::PROVIDES, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::HAS, inverse, override);
+        }
+
+        void CONTAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CONTAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void EXISTS_IN(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::EXISTS_IN, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        /// Note: GENERATED is a subclass of HAS, maybe change in the future
+        void GENERATED(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::GENERATED, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void DEPENDS_ON(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::DEPENDS_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void CONSTRAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CONSTRAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void INTERFACE_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::INTERFACE_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void SPANS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::SPANS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETETARGET, {}, RelationType::NONE, inverse, override);
+        }
+
+        void HAS_UNIQUE(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::HAS_UNIQUE, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void ANNOTATES(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::ANNOTATES, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void ATTACHED_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::ATTACHED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void CAN_SAMPLE(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CAN_SAMPLE, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        void CONDITIONABLE_ON(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CONDITIONABLE_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+        }
+
+        /// Every XType gets a registry instance which has to be used when instantiating new XType(s) during runtime
+        std::shared_ptr< XTypeRegistry > registry;
+
+    protected:
+        std::string m_classname;
+        // TODO: If we allow multiple relation definitions per class attribute here, we could e.g. populate Interface::parent by relations to Component, ComponentModel and InterfaceModel
+        std::map< std::string, Relation > relations;        /* < specifies which relation is attached to the corresponding entry in facts */
+        std::map< std::string, bool > relation_dir_forward; /* < specifies whether the target (forward direction) or the source of a relation is filled into the corresponding entry in facts */
+        std::map< std::string, std::vector< Fact > > facts; /* < holds all the INSTANCES of a certain relation (aka edges) to/from other XTypes */
+        std::map< std::string, nl::json > properties;       /* < holds all the entities which have been defined as properties */
+        std::map< std::string, nl::json::value_t > property_types; /* < holds the types of the entities which have been defined as properties */
+        std::map< std::string, std::set< nl::json > > allowed_property_values; /* < if a property has been constrained, this map will contain all allowed values of that property */
+
+        /// Checks whether the passed pointer is an instance of the base class
+        template<typename Base, typename T>
+        inline bool isinstance(const T *ptr)
+        {
+           return dynamic_cast<const Base*>(ptr) != nullptr;
+        }
+
+    };
+}

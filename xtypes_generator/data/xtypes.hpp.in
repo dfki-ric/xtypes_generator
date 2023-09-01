@@ -1,0 +1,7 @@
+#pragma once
+
+{%- for classname in classnames %}
+{%- if classname != "XType" %}
+#include "{{classname}}.hpp"
+{%- endif %}
+{%- endfor %}

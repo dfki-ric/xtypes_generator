@@ -1,0 +1,78 @@
+/**
+ * {{ generator_comment }}
+ */
+
+#include "{{classname}}.hpp"
+
+// Including used XType classes
+{%- for c in classes %}
+{%- if c != classname and "::" not in c %}
+#include "{{c}}.hpp"
+{%- endif %}
+{%- endfor %}
+
+using namespace {{project_name}};
+
+// Constructor
+{{project_name}}::{{classname}}::{{classname}}(const std::string& classname) : _{{classname}}(classname)
+{
+    // NOTE: Properties and relations have been created in _{{classname}} constructor
+    // You can add custom properties with
+    // this->define_property("name", json type, { allowed_value1, allowed_value2, ...}, default_value [, true if you want to override a base class property ] );
+    // Most importantly, if you use the registry to instantiate other XTypes not yet specified in the template
+    // you have to register them here with
+    // registry->register_class<YourInternallyUsedXType>();
+}
+
+// Static identifier
+const std::string {{project_name}}::{{classname}}::classname = "{{ project_name }}::{{ classname }}";
+
+// Method implementations
+{%- for method_name, method in methods %}
+// {{method[0]}}
+{%- if method[1] %}
+{%- for ttype in method[7] %}
+{{method[5] if not method[4] else ttype}} {{project_name}}::{{classname}}::{{method_name}}(
+{%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0] if not arg[2] else ttype}}{%- else %}{{(arg[0] if not arg[2] else ttype).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0] if not arg[2] else ttype) not in classes -%}&{%- endif %} {{arg_name}}
+{%- if not loop.last %}, {% endif %}
+{%- endfor %}){% if method[8] and not method[6] %} const{% endif %}
+{
+   throw std::bad_function_call();
+}
+{%- endfor -%}
+{%- else %}
+{{method[5]}} {{project_name}}::{{classname}}::{{method_name}}(
+{%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0]}}{%- else %}{{(arg[0]).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if not arg[5] -%}&{%- endif %} {{arg_name}}
+{%- if not loop.last %}, {% endif %}
+{%- endfor %}){% if method[8] and not method[6] %} const{% endif %}
+{
+    throw std::bad_function_call();
+}
+{%- endif %}
+{% endfor %}
+
+// Overrides for setters of properties
+{%- for prop_name, prop in properties.items() %}
+{%- if prop[4] %}
+void {{project_name}}::{{classname}}::set_{{prop_name}}(const {{prop[3]}}& value)
+{
+    // Add your advanced code here
+    // Finally call the overridden method
+    this->_{{classname}}::set_{{prop_name}}(value);
+}
+{%- endif%}
+{%- endfor %}
+
+// Overrides for relation setters
+{%- for rel_name, rel in relations.items() %}
+{%- if rel[7] %}
+{%- for cname in rel[1] %}
+void {{project_name}}::{{classname}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
+{
+    // Add your advanced code here
+    // Finally call the overridden method
+    this->_{{classname}}::add_{{rel_name}}(xtype, props);
+}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}

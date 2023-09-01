@@ -1,0 +1,24 @@
+/**
+ * {{ generator_comment }}
+ */
+#pragma once
+
+#include <xtypes_generator/XTypeRegistry.hpp>
+#include <xtypes_generator/XType.hpp>
+{%- for dep in dependencies %}
+#include <{{dep}}/ProjectRegistry.hpp>
+{%- endfor %}
+#include "xtypes.hpp"
+
+namespace {{project_name}} {
+  struct ProjectRegistry : public xtypes::XTypeRegistry {
+    ProjectRegistry() {
+      {%- for classname in derived_classnames %}
+      this->register_class<{{classname}}>();
+      {%- endfor %}
+      {%- for dep in dependencies %}
+      this->import_from({{dep}}::ProjectRegistry{});
+      {%- endfor %}
+    }
+  };
+}

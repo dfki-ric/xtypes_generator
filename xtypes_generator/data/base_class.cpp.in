@@ -1,0 +1,92 @@
+/**
+ * {{ generator_comment }}
+ */
+#include "_{{classname}}.hpp"
+
+// Including used XType classes
+{% for c in classes -%}
+{%- if c != "XType" and "::" not in c-%}
+#include "{{c}}.hpp"
+{% endif -%}
+{% endfor %}
+namespace nl = nlohmann;
+
+
+// Constructor
+{{project_name}}::_{{classname}}::_{{classname}}(const std::string& classname) : {% if inherit -%}{{inherit}}(classname){% else %}XType(classname){% endif %}
+{
+    // Properties
+    {% for prop_name, prop in properties.items() -%}
+    this->define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }, {{prop[2]}}{% if inherit -%}, true{% endif %});
+    {% endfor %}
+    // Relations
+    {% for attr_name, rel in relations.items() -%}
+    //this->define_relation("{{attr_name}}", RelationType::{{rel[0]}}, {classname}, { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, Constraint::{{rel[2]}}, DeletePolicy::{{rel[3]}}, {{rel[4]}}, RelationType::{{rel[5]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
+    this->{{rel[0]}}("{{attr_name}}", { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, {{rel[6]}}{% if inherit -%}, true{% endif %});
+    {% endfor %}
+    // Here, we register ourselves and the xtypes we use to our registry
+    {% for c in classes %}
+    {%- if "::" not in c-%}
+    registry->register_class<{{ c }}>();
+    {% endif -%}
+    {% endfor %}
+}
+
+{% if custom_uri -%}
+// Custom URI generator (overrides default implementation in XType)
+std::string {{project_name}}::_{{classname}}::uri() const
+{
+    const std::string scheme("{{custom_uri[0]}}");
+    const std::string root_path("{{custom_uri[1]}}");
+    std::string url = scheme.empty() ? "" : scheme + ":";
+    url += root_path;
+    {% if custom_uri[2] -%}
+    // Extend the URL by given dependencies to properties or relations
+    {% for entry in custom_uri[2] -%}
+    {% if "property" in entry -%}
+    {
+        // Extend url by property {{entry['property']}}
+        nl::json prop(this->get_property("{{entry['property']}}"));
+        if (prop.is_primitive())
+        {
+            // For each simple property we extend the string ...
+            url += '/' + (prop.is_string() ? prop.get<std::string>() : nl::to_string(prop));
+        }
+        else if (prop.is_array())
+        {
+            // ... for arrays, we sort and add each element to the path
+            std::stable_sort(prop.begin(), prop.end());
+            for (const auto& entry : prop) url += '/' + (entry.is_string() ? entry.get<std::string>() : nl::to_string(entry));
+        }
+        else if (prop.is_object())
+        {
+            // ... for dictionaries, we sort by key and add both key and value to the path
+            std::stable_sort(prop.begin(), prop.end());
+            for (const auto& [key, value] : prop.items()) url += '/' + key + '/' + (value.is_string() ? value.get<std::string>() : nl::to_string(value));
+        }
+    }
+    {% else -%}
+    {
+        // Extend the URL by each entry in relation attribute {{entry['relation']}}
+        const std::vector< xtypes::Fact >& the_facts(this->get_facts("{{entry['relation']}}"));
+        {% if entry['required'] -%}
+        if (the_facts.size() < 1)
+        throw std::runtime_error("{{classname}}::uri: Cannot build URI because of missing facts in {{entry['relation']}}");
+        {% endif -%}
+        for (const auto& entry : the_facts)
+            url += '/' + std::to_string(entry.target.lock()->uuid());
+    }
+    {% endif -%}
+    {% endfor %}
+    {% endif -%}
+    return url;
+}
+{% endif %}
+{% for rel_name, rel in relations.items() %}
+{% for cname in rel[1] %}
+void {{project_name}}::_{{classname}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
+{
+    this->add_fact("{{rel_name}}", xtype, props);
+}
+{% endfor %}
+{% endfor %}

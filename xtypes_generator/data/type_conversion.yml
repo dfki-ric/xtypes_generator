@@ -1,0 +1,55 @@
+default_supported_template_types: [STRING, INTEGER, INTEGER64, BOOLEAN, FLOAT, FLOAT64, JSON]
+STRING:
+  CPP: "std::string"
+  PYTHON: str
+INTEGER:
+  CPP: int
+  PYTHON: int
+INTEGER64:
+  CPP: int64_t
+  PYTHON: int
+BOOLEAN:
+  CPP: bool
+  PYTHON: bool
+FLOAT:
+  CPP: float
+  PYTHON: float
+FLOAT64:
+  CPP: double
+  PYTHON: float
+JSON:
+  CPP: "nl::json"
+  PYTHON: dict
+SET:
+  template_args: T
+  CPP: "std::set<@T@>"
+  PYTHON: set
+PAIR:
+  template_args: [T1, T2]
+  CPP: "std::pair<@T1@, @T2@>"
+  PYTHON: tuple
+MAP:
+  template_args: [T1, T2]
+  CPP: "std::map<@T1@, @T2@>"
+  PYTHON: dict
+ANY:
+  CPP: std::any
+  PYTHON: ""
+VECTOR:
+  template_args: T
+  CPP: "std::vector<@T@>"
+  PYTHON: list
+FUNCTION:
+  template_args: T
+  CPP: "std::function<@T@>"
+  PYTHON: ""
+TEMPLATE:
+  CPP: T
+  PYTHON: T
+XTYPE:
+  template_args: T
+  CPP: "@T@"
+  PYTHON: "@T@"
+JSONTYPE:
+  CPP: "nl::json::value_t"
+  PYTHON: ""
