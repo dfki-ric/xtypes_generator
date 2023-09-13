@@ -78,4 +78,5 @@ add_custom_target(doc
 #########
 # Tests #
 #########
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test EXCLUDE_FROM_ALL)
+# Because the tests need an already installed xtypes_generator, we have to manually trigger it
+#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test EXCLUDE_FROM_ALL)
