@@ -78,5 +78,6 @@ add_custom_target(doc
 #########
 # Tests #
 #########
-# Because the tests need an already installed xtypes_generator, we have to manually trigger it
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test EXCLUDE_FROM_ALL)
+# Because the tests depend on the xtypes_generator to be fully build and installed, we have to do a trick
+add_subdirectory(post_install)
+# The CMakeLists.txt will inject an add_subdirectory() call at the end of the toplvl cmake_install
