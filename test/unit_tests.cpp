@@ -1,14 +1,11 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include <iostream>
-// Include XTypes
-#include  "XType.hpp"
-
-
-
+#include "ProjectRegistry.hpp"
+#include "TestType.hpp"
 
 using namespace xtypes;
-
+using namespace xtypes_generator_test_type;
 
 TEST_CASE("Test XType construction and interface", "XType")
 {
@@ -86,3 +83,19 @@ TEST_CASE("Test Fact construction and usage", "Fact")
         i++;
     }
 }
+
+TEST_CASE("Test XTypeRegistry", "XTypeRegistry")
+{
+    XTypeRegistryPtr registry = std::make_shared<XTypeRegistry>();
+    TestTypePtr x = std::make_shared<TestType>();
+    REQUIRE(not registry->knows_class(x->get_classname()));
+    REQUIRE(not registry->knows_uri(x->uri()));
+    registry->register_class<TestType>();
+    registry->commit(x, false);
+    REQUIRE(registry->knows_uri(x->uri()));
+    // NOTE: get_by_uri() returns a temporary copy of the valid instance inside the registry.
+    REQUIRE(registry->get_by_uri(x->uri())->uri() == x->uri());
+    registry->drop(x->uri());
+    REQUIRE(not registry->knows_uri(x->uri()));
+}
+

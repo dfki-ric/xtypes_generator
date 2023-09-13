@@ -1,0 +1,18 @@
+name: TestType
+properties:
+    a_property:
+        type: STRING
+        allowed_values: ["\"one\"", "\"two\""]
+        default: "\"one\""
+    my_uri:
+        type: STRING
+        default: "\"123\""
+uri:
+    from:
+        - name: my_uri
+relations:
+    a_relation:
+        type: HAS
+        other_classnames:
+            - TestType
+    # TODO: Add the inverse relation
