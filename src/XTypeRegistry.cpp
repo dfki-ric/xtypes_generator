@@ -78,6 +78,11 @@ bool XTypeRegistry::commit(XTypeCPtr& instance, const bool overwrite_if_exists)
     {
         // Copy the content of instance into _valid_instances
         *(_valid_instances.at(uri)) = *instance;
+        // If we have a valid copy, we have to update that as well
+        if (_valid_to_temporary.count(uri) && !_valid_to_temporary.at(uri).expired())
+        {
+            *(_valid_to_temporary.at(uri).lock()) = *instance;
+        }
     }
     // Make sure the registry of the valid instance is set to us!
     _valid_instances.at(uri)->overwrite_registry(shared_from_this());
