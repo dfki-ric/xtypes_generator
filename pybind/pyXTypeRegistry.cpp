@@ -17,6 +17,7 @@ void PYBIND11_INIT_REGISTRY(py::module_& m) {
     py::class_<XTypeRegistry, std::shared_ptr<XTypeRegistry> >(m, "XTypeRegistry")
         .def(py::init())
         .def("register_alias", &XTypeRegistry::register_alias)
+        .def("get_classnames", &XTypeRegistry::get_classnames)
         .def("knows_class", &XTypeRegistry::knows_class)
         .def("instantiate_from", &XTypeRegistry::instantiate_from)
         .def("import_from", &XTypeRegistry::import_from)
