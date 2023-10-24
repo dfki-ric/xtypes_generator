@@ -16,6 +16,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <set>
 
 /**
  * XType v3
@@ -53,6 +54,9 @@ namespace xtypes
 
         /// Function to register an alias to an existing class (useful for conversions)
         bool register_alias(const std::string& original, const std::string& alias);
+
+        /// Get all registered classnames
+        std::set<std::string> get_classnames() const;
 
         /// Check if a classname is known to the registry
         bool knows_class(const std::string& with_name) const;

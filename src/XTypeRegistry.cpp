@@ -18,6 +18,16 @@ bool XTypeRegistry::register_alias(const std::string& original, const std::strin
     return true;
 }
 
+std::set<std::string> XTypeRegistry::get_classnames() const
+{
+    std::set<std::string> classes;
+    for (const auto &[classname, func] : _factories)
+    {
+        classes.insert(classname);
+    }
+    return classes;
+}
+
 bool XTypeRegistry::knows_class(const std::string& with_name) const
 {
     if (_factories.find(with_name) != _factories.end())
