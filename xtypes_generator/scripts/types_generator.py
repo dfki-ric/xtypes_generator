@@ -274,6 +274,8 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                 if "properties" in rel:
                     props = {(k, v) for k, v in rel["properties"].items()}
                     props = repr(props).replace("(", "{").replace(")", "}").replace("'", '"')
+                    props = props.replace("True", "true")
+                    props = props.replace("False", "false")
                 rinverse = False
                 if "inverse" in rel:
                     rinverse = bool(rel["inverse"])
