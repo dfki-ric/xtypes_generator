@@ -200,9 +200,12 @@ XTypeCPtr xtypes::XType::import_from(const nl::json& spec, XTypeRegistryCPtr reg
         {
             const std::string &other_uri(entry["target"]);
             const nl::json &props(entry["edge_properties"]);
+            nl::json updated_props = rel.properties;
+            for (auto& [k,v] : updated_props.items())
+                if (props.contains(k)) v = props.at(k);
             // NOTE: Here we cannot load the other xtype by URI! Otherwise we would trigger a full load of the whole (sub)graph
             // That means, that we cannot use add_fact() but have to add a raw fact
-            ExtendedFact new_fact(other_uri, props);
+            ExtendedFact new_fact(other_uri, updated_props);
             // TODO: Check if already existent?
             // TODO: Check for cardinality constraints?
             result->facts[rel_name].push_back(new_fact);
@@ -556,8 +559,14 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
         throw std::invalid_argument(this->get_classname() + "::add_fact("+name+"): Given xtype ptr is invalid");
     }
 
+    // use default relation properties and update it by given properties
+    const Relation &rel(this->get_relation(name));
+    nl::json updated_props = rel.properties;
+    for (auto& [k,v] : updated_props.items())
+        if (props.contains(k)) v = props.at(k);
+
     const bool is_fact_known(this->has_facts(name));
-    ExtendedFact new_fact(other, props);
+    ExtendedFact new_fact(other, updated_props);
     if (is_fact_known)
     {
         // If fact is already known, update edge properties and return
@@ -567,14 +576,13 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
             // Always update target uri
             // NOTE: If we dont do this, an (now) valid fact stays invalid
             it->target_uri(it->target_uri());
-            it->edge_properties = props;
+            it->edge_properties = updated_props;
             return;
         }
     }
 
     // We have a new fact
     // Get cardinality
-    const Relation &rel(this->get_relation(name));
     Constraint constraint(rel.constraint);
     // Adjust cardinality by relation_dir
     const bool forward(this->get_relations_dir(name));
@@ -609,7 +617,7 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
             continue;
         }
         // We found a match, so we auto-fill the other
-        other->add_fact(other_name, shared_from_this(), props);
+        other->add_fact(other_name, shared_from_this(), updated_props);
     }
 }
 

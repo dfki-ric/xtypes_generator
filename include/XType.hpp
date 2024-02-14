@@ -224,110 +224,108 @@ namespace xtypes {
         void remove_fact(const std::string& name, XTypeCPtr other);
 
         /* Predefined relations */
-        void HAS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void HAS(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
             // HINT: This function creates the correct attribute and defines an 'add_<name>' function to access it with constraints checking
-            define_relation(name, RelationType::HAS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::HAS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, properties, RelationType::NONE, inverse, override);
         }
-
-        void PART_OF_COMPOSITION(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void PART_OF_COMPOSITION(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::PART_OF_COMPOSITION, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::PART_OF_COMPOSITION, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
-
         // 2022-09-22 MS: Changed constraint to MANY2MANY to allow multiple inheritance
-        void SUBCLASS_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void SUBCLASS_OF(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::SUBCLASS_OF, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::SUBCLASS_OF, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
-        void IMPLEMENTS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void IMPLEMENTS(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::IMPLEMENTS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::IMPLEMENTS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
-        void INSTANCE_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void INSTANCE_OF(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::INSTANCE_OF, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
-        }
-
-        void CONNECTED_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
-        {
-            define_relation(name, RelationType::CONNECTED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::INSTANCE_OF, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void ALIAS_OF(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void CONNECTED_TO(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::ALIAS_OF, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::CONNECTED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
 
-        void NEEDS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void ALIAS_OF(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::NEEDS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::HAS, inverse, override);
+            define_relation(name, RelationType::ALIAS_OF, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
 
-        void PROVIDES(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void NEEDS(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::PROVIDES, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, {}, RelationType::HAS, inverse, override);
+            define_relation(name, RelationType::NEEDS, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, properties, RelationType::HAS, inverse, override);
         }
 
-        void CONTAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void PROVIDES(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::CONTAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::PROVIDES, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETETARGET, properties, RelationType::HAS, inverse, override);
         }
 
-        void EXISTS_IN(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void CONTAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::EXISTS_IN, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::CONTAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
+        }
+
+        void EXISTS_IN(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::EXISTS_IN, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
         /// Note: GENERATED is a subclass of HAS, maybe change in the future
-        void GENERATED(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void GENERATED(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::GENERATED, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::GENERATED, {this->get_classname()}, other_classnames, Constraint::ONE2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
 
-        void DEPENDS_ON(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void DEPENDS_ON(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::DEPENDS_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::DEPENDS_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void CONSTRAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void CONSTRAINED_BY(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::CONSTRAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::CONSTRAINED_BY, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void INTERFACE_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void INTERFACE_TO(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::INTERFACE_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::INTERFACE_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void SPANS(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void SPANS(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::SPANS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETETARGET, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::SPANS, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETETARGET, properties, RelationType::NONE, inverse, override);
         }
 
-        void HAS_UNIQUE(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void HAS_UNIQUE(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::HAS_UNIQUE, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::HAS_UNIQUE, {this->get_classname()}, other_classnames, Constraint::ONE2ONE, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
 
-        void ANNOTATES(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void ANNOTATES(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::ANNOTATES, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::ANNOTATES, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETENONE, properties, RelationType::NONE, inverse, override);
         }
 
-        void ATTACHED_TO(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void ATTACHED_TO(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::ATTACHED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::ATTACHED_TO, {this->get_classname()}, other_classnames, Constraint::MANY2ONE, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void CAN_SAMPLE(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void CAN_SAMPLE(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::CAN_SAMPLE, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::CAN_SAMPLE, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
-        void CONDITIONABLE_ON(const std::string& name, const std::set<std::string>& other_classnames, bool inverse = false, bool override = false)
+        void CONDITIONABLE_ON(const std::string& name, const std::set<std::string>& other_classnames, const nl::json& properties={}, bool inverse = false, bool override = false)
         {
-            define_relation(name, RelationType::CONDITIONABLE_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, {}, RelationType::NONE, inverse, override);
+            define_relation(name, RelationType::CONDITIONABLE_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, properties, RelationType::NONE, inverse, override);
         }
 
     protected:

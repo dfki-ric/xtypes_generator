@@ -230,6 +230,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -242,6 +245,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -254,6 +260,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -266,6 +275,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -278,6 +290,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -290,6 +305,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -302,6 +320,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -314,6 +335,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -326,6 +350,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -338,6 +365,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -350,6 +380,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -362,6 +395,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -374,6 +410,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -386,6 +425,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -398,6 +440,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse>
       type: BOOLEAN
       default: false
@@ -410,6 +455,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -422,6 +470,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -434,6 +485,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -446,6 +500,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -458,6 +515,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
     - name: inverse
       type: BOOLEAN
       default: false
