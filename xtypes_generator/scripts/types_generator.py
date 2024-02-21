@@ -553,7 +553,7 @@ def main(args):
 
     # print out all package dependencies for usage in cmake
     all_deps = set()
-    for deps in [c[2] for c in classes]:
+    for deps in [c[2] for c in classes] + [[c[1]] for c in classes if c[1]]:
         for dep in deps:
             if "::" in dep:
                 all_deps.add(dep[:dep.find("::")])
@@ -568,10 +568,14 @@ def main(args):
     classes = sorted(classes, key=lambda x: x[0])
     _classnames_ordered = (["XType"] if "XType" in [c[0] for c in classes] else []) + [c[0] for c in classes if c[1] is None and c[0] != "XType"]  # put all parent on not inherited classes
     # now put all classes from class_deps as soon there parent is defined
+    i = 0
     while len(classes) > len(_classnames_ordered):
+        i+=1
         for c in classes:
-            if c[0] not in _classnames_ordered and class_deps[c[0]] in _classnames_ordered:
+            if c[0] not in _classnames_ordered and (class_deps[c[0]] in _classnames_ordered or class_deps[c[0]] not in class_deps.keys()):
                 _classnames_ordered.append(c[0])
+        if i > len(classes)+1:
+            raise RuntimeError("Prevented an infinite loop! Inform the developer. Info:"+str(_classnames_ordered)+" "+str(classes))
 
     classes = sorted(classes, key=lambda x: _classnames_ordered.index(x[0]))
 
