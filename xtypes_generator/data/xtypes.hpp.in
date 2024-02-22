@@ -1,7 +1,10 @@
+/**
+ * {{ generator_comment }} from xtypes.hpp.in
+ */
 #pragma once
 
 {%- for classname in classnames %}
-{%- if classname != "XType" %}
-#include "{{classname}}.hpp"
+{%- if classname != "xtypes::XType" %}
+#include "{{classname.split('::')[-1]}}.hpp"
 {%- endif %}
 {%- endfor %}

@@ -12,7 +12,7 @@ namespace nl = nlohmann;
 using namespace xtypes;
 
 PYBIND11_EXPORT
-void PYBIND11_INIT_REGISTRY(py::module_& m) {
+void PYBIND11_INIT_XTYPES_GENERATOR__REGISTRY(py::module_& m) {
     // NOTE: The 3rd argument is a different default holder. Default is std::unique_ptr but we need std::shared_ptr.
     py::class_<XTypeRegistry, std::shared_ptr<XTypeRegistry> >(m, "XTypeRegistry")
         .def(py::init())

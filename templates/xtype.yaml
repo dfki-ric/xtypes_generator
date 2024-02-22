@@ -134,17 +134,17 @@ methods:
       - name: to_classnames
         type: SET(STRING)
       - name: constraint
-        type: Constraint
-        default: "Constraint::MANY2MANY"
+        type: xtypes::Constraint
+        default: "xtypes::Constraint::MANY2MANY"
       - name: delete_policy
-        type: DeletePolicy
-        default: "DeletePolicy::DELETENONE"
+        type: xtypes::DeletePolicy
+        default: "xtypes::DeletePolicy::DELETENONE"
       - name: default_properties
         type: JSON
-        default: "nl::json{}" 
+        default: "nl::json{}"
       - name: super_relation_type
-        type: RelationType
-        default: "RelationType::NONE"
+        type: xtypes::RelationType
+        default: "xtypes::RelationType::NONE"
       - name: inverse
         type: BOOLEAN
         default: False

@@ -23,7 +23,7 @@ namespace pybind11 { namespace detail {
 }}
 
 PYBIND11_EXPORT
-void PYBIND11_INIT_STRUCTS(py::module_& m) {
+void PYBIND11_INIT_XTYPES_GENERATOR__STRUCTS(py::module_& m) {
     py::class_<Relation>(m, "Relation")
         .def(py::init())
         .def("to_json", &Relation::to_json)

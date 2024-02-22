@@ -96,6 +96,8 @@ JsonTypes = {
 #"binary": "nl::json::value_t::binary",
 #"discarded": "nl::json::value_t::discarded",
 }
+
+
 # Converts PropertyType string identifier to a string representation of the desired language's data type
 def parse_type(property_type: str, lang: Language) -> tuple:
     """
@@ -222,6 +224,8 @@ def parse_yaml(yaml_data, project_name, lang: Language):
     """
     classname = yaml_data["name"]
     inherit = None if "inherit" not in yaml_data else yaml_data["inherit"]
+    if inherit and "::" not in inherit:
+        inherit = project_name+"::"+inherit
     properties = {}
     default_template_types = []
     if "properties" in yaml_data:
@@ -266,9 +270,9 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                     rclassnames_raw = set(rel["other_classnames"])
                 rclassnames = set()
                 for cname in rclassnames_raw:
-                    classes.add(cname)
                     if "::" not in cname:
                         cname = f"{project_name}::{cname}"
+                    classes.add(cname)
                     rclassnames.add(cname)
                 props = {}
                 if "properties" in rel:
@@ -349,6 +353,8 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                     returned_xtype = get_xtype(return_type_in)
                     # Register xtype class
                     if returned_xtype is not None:
+                        if "::" not in returned_xtype:
+                            returned_xtype = project_name+"::"+returned_xtype
                         classes.add(returned_xtype)
                     return_type_is_template = is_template(return_type_in)
                 arguments_in = {}
@@ -366,12 +372,14 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                             arg_xtype = get_xtype(arg_type_in)
                             arg_is_template = is_template(arg_type_in)
                             arg_type, atempl = parse_type(arg_type_in, lang)
-                            if arg_type.startswith("XType"):
-                                arg_type = project_name+"::"+arg_type
                             if atempl is not None:
                                 template_types += atempl
                             # Register xtype class
                             if arg_xtype is not None:
+                                if not "::" in arg_xtype:
+                                    _temp = project_name+"::"+arg_xtype
+                                    arg_type = arg_type.replace(arg_xtype, _temp)
+                                    arg_xtype = _temp
                                 classes.add(arg_xtype)
                             # Handle template arg
                             if arg_is_template:
@@ -395,12 +403,14 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                     _t, _ = parse_type(t, lang)
                     _temp += [_t]
                     if xt is not None:
+                        if "::" not in xt:
+                            xt = project_name+"::"+xt
                         classes.add(xt)
                 template_types = _temp
                 methods += [(method_name, (
                     description, method_is_template, template_args, arguments, return_type_is_template, return_type,
                     "static" in method and method["static"], template_types, "const" in method and method["const"], len(overrides)>1))]
-    return classname, properties, relations, sorted(classes), custom_uri, methods, default_template_types, inherit
+    return f"{'xtypes' if project_name == 'xtypes_generator' else project_name}::{classname}", properties, relations, sorted(classes), custom_uri, methods, default_template_types, inherit
 
 
 jinja_env = Environment(
@@ -479,8 +489,8 @@ def generate_file(project_name, input_file, output_dir, languages, skeleton_file
                                                                   custom_uri=info[4], methods=info[5],
                                                                   properties=info[1], relations=info[2],
                                                                   inherit=info[7])
-                write(os.path.join(output_dir, "include", "_" + info[0] + '.hpp'), base_class_header)
-                write(os.path.join(output_dir, "src", "_" + info[0] + '.cpp'), base_class_source)
+                write(os.path.join(output_dir, "include", "_" + info[0].split("::")[-1] + '.hpp'), base_class_header)
+                write(os.path.join(output_dir, "src", "_" + info[0].split("::")[-1] + '.cpp'), base_class_source)
                 if skeleton_files is not None:
                     create_dir(os.path.join(skeleton_files, "include"))
                     create_dir(os.path.join(skeleton_files, "src"))
@@ -501,7 +511,7 @@ def generate_file(project_name, input_file, output_dir, languages, skeleton_file
                                                                default_template_types=info[6],
                                                                inherit=info[7])
 
-            write(os.path.join(output_dir, "pybind", 'py'+info[0] + '.cpp'), pybind_class_source)
+            write(os.path.join(output_dir, "pybind", 'py'+info[0].split("::")[-1] + '.cpp'), pybind_class_source)
         else:
             raise NotImplementedError(f"Language {language.name} not supported")
     return info[0], info[7], info[3]
@@ -543,11 +553,13 @@ def main(args):
     # Generate code
     classes = []
     if os.path.isdir(args.input):
+        top_level_dir = os.path.dirname(args.input)
         for file in os.listdir(args.input):
             filename = os.path.join(args.input, file)
             classes += [generate_file(project_name=args.project_name, input_file=filename, output_dir=args.output, languages=languages,
                                       skeleton_files=args.skeleton_dir, overwrite=args.overwrite_skeletons)]
     else:
+        top_level_dir = os.path.normpath(os.path.join(os.path.dirname(args.input), ".."))
         classes += [generate_file(project_name=args.project_name, input_file=args.input, output_dir=args.output, languages=languages,
                                   skeleton_files=args.skeleton_dir, overwrite=args.overwrite_skeletons)]
 
@@ -555,7 +567,7 @@ def main(args):
     all_deps = set()
     for deps in [c[2] for c in classes] + [[c[1]] for c in classes if c[1]]:
         for dep in deps:
-            if "::" in dep:
+            if not dep.startswith(args.project_name+"::"):
                 all_deps.add(dep[:dep.find("::")])
     print(";".join(list(all_deps)), end="")  # this is the ouput of this command
 
@@ -566,7 +578,7 @@ def main(args):
         for c in classes if c[1] is not None
     }
     classes = sorted(classes, key=lambda x: x[0])
-    _classnames_ordered = (["XType"] if "XType" in [c[0] for c in classes] else []) + [c[0] for c in classes if c[1] is None and c[0] != "XType"]  # put all parent on not inherited classes
+    _classnames_ordered = (["XType"] if "XType" in [c[0] for c in classes] else []) + list(set([c[0] for c in classes if c[1] is None and c[0] != "XType"]))  # put all parent on not inherited classes
     # now put all classes from class_deps as soon there parent is defined
     i = 0
     while len(classes) > len(_classnames_ordered):
@@ -579,18 +591,28 @@ def main(args):
 
     classes = sorted(classes, key=lambda x: _classnames_ordered.index(x[0]))
 
+    if args.project_name != "xtypes_generator":
+        all_deps.add("xtypes_generator")
+
     if Language.PYTHON in languages:
         pybind_module_template = jinja_env.get_template("pybind_module.cpp.in")
         generator_comment = "Auto-generated with xtypes_generator.py " + datetime.datetime.now().strftime(
             "%m/%d/%Y %H:%M:%S")
-        classnames = ["XType"] + [c[0] for c in classes]
-        pybind_module_source = pybind_module_template.render(project_name=args.project_name, generator_comment=generator_comment, classnames=classnames, create_project_registry=not args.do_not_create_project_registry)
+        classnames = ["xtypes::XType"] + [c[0] for c in classes if c[0] != "xtypes::XType"]
+        pybind_module_source = pybind_module_template.render(
+            project_name=args.project_name,
+            generator_comment=generator_comment,
+            classnames=classnames,
+            create_project_registry=not args.do_not_create_project_registry,
+            deps=sorted(all_deps),
+            custom_binds=os.path.isfile(os.path.join(top_level_dir, "pybind", "_pyCustomBinds.cpp"))
+        )
         write(os.path.join(args.output, "pybind", 'pybind11_module.cpp'), pybind_module_source)
     if Language.CPP in languages and not args.do_not_create_project_registry:
         package_header_template = jinja_env.get_template("xtypes.hpp.in")
         generator_comment = "Auto-generated with xtypes_generator.py " + datetime.datetime.now().strftime(
             "%m/%d/%Y %H:%M:%S")
-        classnames = (["XType"] if "XType" in classes else []) + [c[0] for c in classes]
+        classnames = (["xtypes::XType"] if "xtypes::XType" in classes else []) + [c[0] for c in classes if c[0] != "xtypes::XType"]
         package_header = package_header_template.render(project_name=args.project_name, generator_comment=generator_comment, classnames=classnames)
         write(os.path.join(args.output, "include", 'xtypes.hpp'), package_header)
 

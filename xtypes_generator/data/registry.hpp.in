@@ -1,5 +1,5 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from registry.hpp.in
  */
 #pragma once
 
@@ -14,7 +14,7 @@ namespace {{project_name}} {
   struct ProjectRegistry : public xtypes::XTypeRegistry {
     ProjectRegistry() {
       {%- for classname in derived_classnames %}
-      this->register_class<{{classname}}>();
+      this->register_class<{{classname.split('::')[-1]}}>();
       {%- endfor %}
       {%- for dep in dependencies %}
       this->import_from({{dep}}::ProjectRegistry{});

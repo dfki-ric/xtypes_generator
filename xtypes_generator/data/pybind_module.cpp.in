@@ -1,5 +1,5 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from pybind_module.cpp.in
  */
 
 #include <pybind11/pybind11.h>
@@ -7,26 +7,36 @@
 
 namespace py = pybind11;
 
-void PYBIND11_INIT_ENUMS(py::module_ &);
-void PYBIND11_INIT_STRUCTS(py::module_ &);
-void PYBIND11_INIT_UTILS(py::module_ &);
-{%- for classname in classnames %}
-void PYBIND11_INIT_CLASS_{{classname.upper()}}(py::module_ &);
+{%- for c in classnames %}
+{% if project_name == "xtypes_generator" or (c.split("::")[0] == project_name and not (project_name != "xtypes_generator" and c == "xtypes::XType")) %}
+void PYBIND11_INIT_CLASS_{{c.upper()|replace("::", "__")}}(py::module_ &);
+{%- endif %}
 {%- endfor %}
-void PYBIND11_INIT_REGISTRY(py::module_ &);
 {%- if create_project_registry %}
-void PYBIND11_INIT_PROJECTREGISTRY(py::module_ &);
+void PYBIND11_INIT_{{project_name.upper()}}__PROJECTREGISTRY(py::module_ &);
+{%- endif %}
+
+{%- if custom_binds %}
+void PYBIND11_INIT_{{project_name.upper()}}__CUSTOM_BINDS(py::module_ &);
+{% else %}
+PYBIND11_EXPORT
+void PYBIND11_INIT_{{project_name.upper()}}__CUSTOM_BINDS(py::module_ &) {};
 {%- endif %}
 
 PYBIND11_MODULE({{project_name}}_py, m) {
-  PYBIND11_INIT_ENUMS(m);
-  PYBIND11_INIT_STRUCTS(m);
-  PYBIND11_INIT_UTILS(m);
-  {%- for classname in classnames %}
-  PYBIND11_INIT_CLASS_{{classname.upper()}}(m);
+  {% for dep in deps %}
+  py::module_::import("{{dep}}_py");
   {%- endfor %}
-  PYBIND11_INIT_REGISTRY(m);
+
+  {%- if custom_binds %}
+  PYBIND11_INIT_{{project_name.upper()}}__CUSTOM_BINDS(m);
+  {%- endif %}
+  {%- for c in classnames %}
+  {% if project_name == "xtypes_generator" or (c.split("::")[0] == project_name and not (project_name != "xtypes_generator" and c == "xtypes::XType")) %}
+  PYBIND11_INIT_CLASS_{{c.upper()|replace("::", "__")}}(m);
+  {%- endif %}
+  {%- endfor %}
   {%- if create_project_registry %}
-  PYBIND11_INIT_PROJECTREGISTRY(m);
+  PYBIND11_INIT_{{project_name.upper()}}__PROJECTREGISTRY(m);
   {%- endif %}
 }
