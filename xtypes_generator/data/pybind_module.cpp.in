@@ -24,6 +24,10 @@ void PYBIND11_INIT_{{project_name.upper()}}__CUSTOM_BINDS(py::module_ &) {};
 {%- endif %}
 
 PYBIND11_MODULE({{project_name}}_py, m) {
+  {% if deps %}
+  m.doc() = "The entities in this module inherit from these other modules: {% for dep in deps %}{{dep}}_py{% if not loop.last%}, {% endif %}{%- endfor %}";
+  {% endif %}
+
   {% for dep in deps %}
   py::module_::import("{{dep}}_py");
   {%- endfor %}
