@@ -91,65 +91,22 @@ namespace xtypes {
 
         /* Property Interface */
 
-        // This function is used to define that a property with 'name' and 'default_value'
-        //void define_property(const std::string& name, const nl::json& default_value, const nl::json::value_t& type=nl::json::value_t::discarded, const bool& override = false);
+        // TODO: Add documentation
 
-        /** This function is used to define a property with a 'name', a 'type', 'allowed_values' and a 'default_value'.
-         * The 'override' parameter would override properties defined in an intermediate base class
-         * @param The name of the property
-         * @param (optional) The type of the value this property accepts
-         * @param (optional) The allowed values
-         * @param (optional) The default value
-         * @param (optional, default = false) Whether we redefine the previously vision
-         */
-        // TODO: In xtypes3.1 we will update this
-        void define_property(const std::string& name,
-                             const nl::json::value_t& type=nl::json::value_t::discarded,
-                             const std::set<nl::json>& allowed_values = {},
-                             const nl::json& default_value = {},
-                             const bool& override = false);
+        void set_property_schema(const nl::json& schema);
+        nl::json get_property_schema() const;
+        bool has_property(const nl::json& path_to_key) const;
 
-        /// This function checks if a property has been defined
-        // TODO: In xtypes3.1 we will update this
-        bool has_property(const std::string& name) const;
+        nl::json::value_t get_property_type(const nl::json& path_to_key) const;
+        bool is_type_matching(const nl::json& path_to_key, const nl::json& value) const;
 
-        /// This function is used to get the type of a property
-        // TODO: In xtypes3.1 we will update this
-        nl::json::value_t get_property_type(const std::string& name) const;
-
-        /// Checks if a value can be assigned to a property
-        // TODO: In xtypes3.1 we will update this
-        bool is_type_matching(const std::string& name, const nl::json& value);
-
-        /// This function is used to get the allowed values of a property
-        // TODO: In xtypes3.1 we will update this
+        bool is_allowed_value(const nl::json& path_to_key, const nl::json& value) const;
         std::set<nl::json> get_allowed_property_values(const std::string& name) const;
 
-        /// Checks if a value can be assigned to a property
-        // TODO: In xtypes3.1 we will update this
-        bool is_allowed_value(const std::string& name, const nl::json& value);
+        nl::json get_property(const nl::json& path_to_key) const;
+        void set_property(const nl::json& path_to_key, const nl::json& new_value, const bool shall_throw = true);
 
-        /** This function sets a new value to an DEFINED property (see has_property)
-          * @param The name of the property
-          * @param The new_value for this property
-          * @param Whether we ensure the type correctness
-         */
-        // TODO: In xtypes3.1 we will update this
-        void set_property(const std::string& name, const nl::json& new_value, const bool shall_throw = true);
-
-        /// This function gets the current value of an DEFINED property
-        // TODO: In xtypes3.1 we will update this
-        nl::json get_property(const std::string& name) const;
-
-        /// Returns all the DEFINED properties of the XType
-        // TODO: In xtypes3.1 we will update this
         nl::json get_properties() const;
-
-        /** Set all matching properties at once. If shall_throw is true, an exception is triggered iff properties do not match.
-         * @param A json map from name to value
-         * @param Whether we ensure the type correctness
-         */
-        // TODO: In xtypes3.1 we will update this
         void set_properties(const nl::json& properties, const bool shall_throw = true);
 
         /* Relation Interface */
@@ -338,12 +295,21 @@ namespace xtypes {
         std::map< std::string, bool > relation_dir_forward; /* < specifies whether the target (forward direction) or the source of a relation is filled into the corresponding entry in facts */
         std::map< std::string, std::vector< ExtendedFact > > facts; /* < Holds facts/references to other XTypes (either by URI or by weak pointer) */
 
-        // TODO: In xtypes3.1 we will update this
-        std::map< std::string, nl::json > properties;       /* < holds all the entities which have been defined as properties */
-        // TODO: In xtypes3.1 we will update this
-        std::map< std::string, nl::json::value_t > property_types; /* < holds the types of the entities which have been defined as properties */
-        // TODO: In xtypes3.1 we will update this
-        std::map< std::string, std::set< nl::json > > allowed_property_values; /* < if a property has been constrained, this map will contain all allowed values of that property */
+        // The schema contains a JSON object with the following structure:
+        // key1:
+        //   type:
+        //   (default:)
+        //   (allowed:)
+        // key2:
+        //   subkey1:
+        //     type:
+        //     (default:)
+        //     (allowed:)
+        //   subkey2:
+        //     subsubkey1:
+        //       ...
+        nl::json property_schema;
+        nl::json properties;
 
         /// Checks whether the passed pointer is an instance of the base class
         template<typename Base, typename T>
