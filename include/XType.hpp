@@ -93,13 +93,13 @@ namespace xtypes {
 
         /**
          * Define an entry in the property schema of the XType
-         * @param path_to_key The complete path to the final key
+         * @param path_to_key The complete path to the final key (/path/to/key)
          * @param (optional) type The type of value to be assignable to the key
          * @param (optional) allowed_values Set of values which are allowed to be assigned to the key
          * @param (optional) default_value A default value which is initially assigned to the key
          * @param (optional) override If true any existing property definition gets overridden otherwise this function will throw
          */
-        void define_property(const nl::json& path_to_key,
+        void define_property(const std::string& path_to_key,
                              const nl::json::value_t& type=nl::json::value_t::discarded,
                              const std::set<nl::json>& allowed_values = {},
                              const nl::json& default_value = {},
@@ -109,47 +109,47 @@ namespace xtypes {
          * @param path_to_key The complete path to the final key
          * @returns True if the key has been defined, false otherwise
          */
-        bool has_property(const nl::json& path_to_key) const;
+        bool has_property(const std::string& path_to_key) const;
 
         /**
          * Retrieve the type of a defined property
          * @param path_to_key The complete path to the final key
          * @returns The type of the key
          */
-        nl::json::value_t get_property_type(const nl::json& path_to_key) const;
+        nl::json::value_t get_property_type(const std::string& path_to_key) const;
         /**
          * Checks whether a given value matches the type of the key
          * @param path_to_key The complete path to the final key
          * @returns True if type matches, false otherwise
          */
-        bool is_type_matching(const nl::json& path_to_key, const nl::json& value) const;
+        bool is_type_matching(const std::string& path_to_key, const nl::json& value) const;
 
         /**
          * Checks whether a given value can be assigned to a key
          * @param path_to_key The complete path to the final key
          * @returns True if value can be assigned, false otherwise
          */
-        bool is_allowed_value(const nl::json& path_to_key, const nl::json& value) const;
+        bool is_allowed_value(const std::string& path_to_key, const nl::json& value) const;
         /**
          * Retrieve the set of allowed values which can be assigned to a key
          * @param path_to_key The complete path to the final key
          * @returns The set of allowed values
          */
-        std::set<nl::json> get_allowed_property_values(const std::string& name) const;
+        std::set<nl::json> get_allowed_property_values(const std::string& path_to_key) const;
 
         /**
          * Retrieve the current value of a property
          * @param path_to_key The complete path to the final key
          * @returns The current value
          */
-        nl::json get_property(const nl::json& path_to_key) const;
+        nl::json get_property(const std::string& path_to_key) const;
         /**
          * Assign a new value to a property
          * @param path_to_key The complete path to the final key
          * @param new_value The new value
          * @param (optional) shall_throw If true the function will throw on invalid assignments
          */
-        void set_property(const nl::json& path_to_key, const nl::json& new_value, const bool shall_throw = true);
+        void set_property(const std::string& path_to_key, const nl::json& new_value, const bool shall_throw = true);
 
         /**
          * Get all properties and their values
@@ -349,19 +349,6 @@ namespace xtypes {
         std::map< std::string, bool > relation_dir_forward; /* < specifies whether the target (forward direction) or the source of a relation is filled into the corresponding entry in facts */
         std::map< std::string, std::vector< ExtendedFact > > facts; /* < Holds facts/references to other XTypes (either by URI or by weak pointer) */
 
-        // The schema contains a JSON object with the following structure:
-        // key1:
-        //   type:
-        //   (default:)
-        //   (allowed:)
-        // key2:
-        //   subkey1:
-        //     type:
-        //     (default:)
-        //     (allowed:)
-        //   subkey2:
-        //     subsubkey1:
-        //       ...
         nl::json property_schema;
         nl::json properties;
 

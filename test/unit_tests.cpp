@@ -19,18 +19,18 @@ TEST_CASE("Test XType construction and interface", "XType")
 
     SECTION("Define and use properties")
     {
-        my_xtype.define_property("a property", nl::json::value_t::string, {}, "a value");
-        REQUIRE(my_xtype.has_property("a property"));
-        my_xtype.define_property("an integral property", nl::json::value_t::number_integer, {}, 1);
-        REQUIRE(my_xtype.has_property("an integral property"));
-        my_xtype.define_property("a real property", nl::json::value_t::number_float, {}, 1.1);
-        REQUIRE(my_xtype.has_property("a real property"));
-        REQUIRE(my_xtype.get_property("a real property") == 1.1);
-        my_xtype.set_property("a real property", 1.2);
-        REQUIRE(my_xtype.get_property("a real property") == 1.2);
-        my_xtype.define_property("direction", nl::json::value_t::string, {"in","out"}, "out");
-        REQUIRE(my_xtype.get_allowed_property_values("direction") == std::set<nl::json>{"in", "out"});
-        REQUIRE_THROWS(my_xtype.set_property("direction", "left"));
+        my_xtype.define_property("/a property", nl::json::value_t::string, {}, "a value");
+        REQUIRE(my_xtype.has_property("/a property"));
+        my_xtype.define_property("/an integral property", nl::json::value_t::number_integer, {}, 1);
+        REQUIRE(my_xtype.has_property("/an integral property"));
+        my_xtype.define_property("/a real property", nl::json::value_t::number_float, {}, 1.1);
+        REQUIRE(my_xtype.has_property("/a real property"));
+        REQUIRE(my_xtype.get_property("/a real property") == 1.1);
+        my_xtype.set_property("/a real property", 1.2);
+        REQUIRE(my_xtype.get_property("/a real property") == 1.2);
+        my_xtype.define_property("/direction", nl::json::value_t::string, {"in","out"}, "out");
+        REQUIRE(my_xtype.get_allowed_property_values("/direction") == std::set<nl::json>{"in", "out"});
+        REQUIRE_THROWS(my_xtype.set_property("/direction", "left"));
 
         SECTION("Test relation definition and usage")
         {
