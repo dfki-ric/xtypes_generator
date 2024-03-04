@@ -91,22 +91,76 @@ namespace xtypes {
 
         /* Property Interface */
 
-        // TODO: Add documentation
-
-        void set_property_schema(const nl::json& schema);
-        nl::json get_property_schema() const;
+        /**
+         * Define an entry in the property schema of the XType
+         * @param path_to_key The complete path to the final key
+         * @param (optional) type The type of value to be assignable to the key
+         * @param (optional) allowed_values Set of values which are allowed to be assigned to the key
+         * @param (optional) default_value A default value which is initially assigned to the key
+         * @param (optional) override If true any existing property definition gets overridden otherwise this function will throw
+         */
+        void define_property(const nl::json& path_to_key,
+                             const nl::json::value_t& type=nl::json::value_t::discarded,
+                             const std::set<nl::json>& allowed_values = {},
+                             const nl::json& default_value = {},
+                             const bool& override = false);
+        /**
+         * Checks whether a property with the given path has been defined or not
+         * @param path_to_key The complete path to the final key
+         * @returns True if the key has been defined, false otherwise
+         */
         bool has_property(const nl::json& path_to_key) const;
 
+        /**
+         * Retrieve the type of a defined property
+         * @param path_to_key The complete path to the final key
+         * @returns The type of the key
+         */
         nl::json::value_t get_property_type(const nl::json& path_to_key) const;
+        /**
+         * Checks whether a given value matches the type of the key
+         * @param path_to_key The complete path to the final key
+         * @returns True if type matches, false otherwise
+         */
         bool is_type_matching(const nl::json& path_to_key, const nl::json& value) const;
 
+        /**
+         * Checks whether a given value can be assigned to a key
+         * @param path_to_key The complete path to the final key
+         * @returns True if value can be assigned, false otherwise
+         */
         bool is_allowed_value(const nl::json& path_to_key, const nl::json& value) const;
+        /**
+         * Retrieve the set of allowed values which can be assigned to a key
+         * @param path_to_key The complete path to the final key
+         * @returns The set of allowed values
+         */
         std::set<nl::json> get_allowed_property_values(const std::string& name) const;
 
+        /**
+         * Retrieve the current value of a property
+         * @param path_to_key The complete path to the final key
+         * @returns The current value
+         */
         nl::json get_property(const nl::json& path_to_key) const;
+        /**
+         * Assign a new value to a property
+         * @param path_to_key The complete path to the final key
+         * @param new_value The new value
+         * @param (optional) shall_throw If true the function will throw on invalid assignments
+         */
         void set_property(const nl::json& path_to_key, const nl::json& new_value, const bool shall_throw = true);
 
+        /**
+         * Get all properties and their values
+         * @returns The properties
+         */
         nl::json get_properties() const;
+        /**
+         * Assign new property values
+         * @param properties The new properties
+         * @param shall_throw (optional) If true the function will throw on invalid assignments
+         */
         void set_properties(const nl::json& properties, const bool shall_throw = true);
 
         /* Relation Interface */
