@@ -357,12 +357,12 @@ nl::json xtypes::XType::get_properties() const
 
 void xtypes::XType::set_properties(const nl::json &properties, const bool shall_throw)
 {
-    // FIXME: This does not work with JSON properties inside. So the json_pointers have to be constructed from the schema
-    // However, we cannot throw on invalid property keys anymore since they are always valid
-    nl::json flattened(properties.flatten());
+    nl::json flattened(this->property_schema.property_types.flatten());
     for (const auto &[k,v] : flattened.items())
     {
-        set_property(k, v, shall_throw);
+        nl::json::json_pointer jptr(k);
+        if (properties.contains(jptr))
+            set_property(k, properties.at(jptr), shall_throw);
     }
 }
 
