@@ -11,7 +11,7 @@ namespace nl = nlohmann;
 using namespace xtypes;
 
 PYBIND11_EXPORT
-void PYBIND11_INIT_UTILS(py::module_& m) {
+void PYBIND11_INIT_XTYPES_GENERATOR__UTILS(py::module_& m) {
     m.def("parseJson", &xtypes::parseJson,
                 py::arg("string"),
                 py::arg("info")="")

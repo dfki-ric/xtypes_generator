@@ -9,7 +9,7 @@ namespace py = pybind11;
 using namespace xtypes;
 
 PYBIND11_EXPORT
-void PYBIND11_INIT_ENUMS(py::module_& m) {
+void PYBIND11_INIT_XTYPES_GENERATOR__ENUMS(py::module_& m) {
     py::enum_<Constraint>(m, "Constraint")
         .value("MANY2MANY", Constraint::MANY2MANY)
         .value("ONE2MANY", Constraint::ONE2MANY)

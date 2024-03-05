@@ -1,5 +1,5 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from pybind_class.cpp.in
  */
 
 
@@ -11,9 +11,9 @@
 #include <pybind11/functional.h>
 #include <pybind11/chrono.h>
 
-#include "{{classname}}.hpp"
+#include "{{classname.split("::")[-1]}}.hpp"
 
-{%- if classname == "XType" %}
+{%- if classname == "xtypes::XType" %}
 #include "XTypeRegistry.hpp"
 // NOTE: std::weak ptr is not supported by default in pybind11 and requires custom implementation as shown below...
 PYBIND11_DECLARE_HOLDER_TYPE(T, std::weak_ptr<T>);
@@ -27,21 +27,21 @@ namespace pybind11 { namespace detail {
 {%- endif %}
 
 {%- if inherit and inherit not in classes %}
-{%- if inherit == "XType" %}
+{%- if inherit == "xtypes::XType" %}
 #include <xtypes_generator/XType.hpp>
-{% elif "::" in inherit %}
-#include <{{inherit.replace("::", "/")}}.hpp>
+{% elif project_name == inherit.split("::")[0] %}
+#include "{{inherit.split("::")[-1]}}.hpp"
 {% else %}
-#include "{{inherit}}.hpp"
+#include <{{inherit.replace("::", "/")}}.hpp>
 {%- endif %}
 {%- endif %}{%- for c in classes %}
 {%- if c != classname %}
-{%- if c == "XType" %}
+{%- if c == "xtypes::XType" %}
 #include <xtypes_generator/XType.hpp>
-{% elif "::" in c %}
-#include <{{c.replace("::", "/")}}.hpp>
+{% elif project_name in c %}
+#include "{{c.split("::")[-1]}}.hpp"
 {% else %}
-#include "{{c}}.hpp"
+#include <{{c.replace("::", "/")}}.hpp>
 {%- endif %}
 {%- endif %}
 {% endfor %}
@@ -49,15 +49,10 @@ namespace pybind11 { namespace detail {
 namespace py = pybind11;
 namespace nl = nlohmann;
 
-using namespace xtypes;
-{%- if classname != "XType" %}
-using namespace {{project_name}};
-{%- endif %}
-
 PYBIND11_EXPORT
-void PYBIND11_INIT_CLASS_{{classname.upper()}}(py::module_& m) {
+void PYBIND11_INIT_CLASS_{{classname.upper()|replace("::", "__")}}(py::module_& m) {
     // NOTE: The 3rd argument is a different default holder. Default is std::unique_ptr but we need std::shared_ptr.
-     py::class_<{{classname}}{%- if classname != "XType" and not inherit%}, xtypes::XType{%- elif inherit and classname != inherit%}, {{inherit}}{%- endif %}, std::shared_ptr<{{classname}}> >(m, "{{classname}}")
+    py::class_<{{classname}}{%- if classname != "xtypes::XType" and not inherit%}, xtypes::XType{%- elif inherit and classname != inherit%}, {{inherit}}{%- endif %}, std::shared_ptr<{{classname}}> >(m, "{{classname.split("::")[-1]}}")
         .def(py::init<>())
         .def(py::init<const std::string&>())
         {%- if custom_uri %}

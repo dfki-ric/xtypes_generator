@@ -1,20 +1,22 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from base_class.cpp.in
  */
-#include "_{{classname}}.hpp"
+#include "_{{classname.split("::")[-1]}}.hpp"
 #include <xtypes_generator/utils.hpp>
 
 // Including used XType classes
 {% for c in classes -%}
-{%- if c != "XType" and "::" not in c-%}
-#include "{{c}}.hpp"
+{%- if c != "xtypes::XType" and project_name == c.split("::")[0]-%}
+#include "{{c.split("::")[-1]}}.hpp"
+{% elif c != "xtypes::XType" %}
+#include <{{c.replace("::", "/")}}.hpp>
 {% endif -%}
 {% endfor %}
 namespace nl = nlohmann;
 
 
 // Constructor
-{{project_name}}::_{{classname}}::_{{classname}}(const std::string& classname) : {% if inherit -%}{{inherit}}(classname){% else %}XType(classname){% endif %}
+{{project_name}}::_{{classname.split("::")[-1]}}::_{{classname.split("::")[-1]}}(const std::string& classname) : {% if inherit -%}{{inherit}}(classname){% else %}XType(classname){% endif %}
 {
     // Properties
     {% for prop_name, prop in properties.items() -%}
@@ -22,7 +24,7 @@ namespace nl = nlohmann;
     {% endfor %}
     // Relations
     {% for attr_name, rel in relations.items() -%}
-    //this->define_relation("{{attr_name}}", RelationType::{{rel[0]}}, {classname}, { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, Constraint::{{rel[2]}}, DeletePolicy::{{rel[3]}}, {{rel[4]}}, RelationType::{{rel[5]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
+    //this->define_relation("{{attr_name}}", RelationType::{{rel[0]}}, {{classname}}, { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, Constraint::{{rel[2]}}, DeletePolicy::{{rel[3]}}, {{rel[4]}}, RelationType::{{rel[5]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
     this->{{rel[0]}}("{{attr_name}}", { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, {{rel[4]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
     {% endfor %}
     // Here, we register ourselves and the xtypes we use to our registry
@@ -35,7 +37,7 @@ namespace nl = nlohmann;
 
 {% if custom_uri -%}
 // Custom URI generator (overrides default implementation in XType)
-std::string {{project_name}}::_{{classname}}::uri() const
+std::string {{project_name}}::_{{classname.split("::")[-1]}}::uri() const
 {
     const std::string scheme("{{custom_uri[0]}}");
     const std::string root_path("{{custom_uri[1]}}");
@@ -104,7 +106,7 @@ std::string {{project_name}}::_{{classname}}::uri() const
 {% endif %}
 {% for rel_name, rel in relations.items() %}
 {% for cname in rel[1] %}
-void {{project_name}}::_{{classname}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
+void {{project_name}}::_{{classname.split("::")[-1]}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
 {
     this->add_fact("{{rel_name}}", xtype, props);
 }
