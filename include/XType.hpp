@@ -349,7 +349,7 @@ namespace xtypes {
         std::map< std::string, bool > relation_dir_forward; /* < specifies whether the target (forward direction) or the source of a relation is filled into the corresponding entry in facts */
         std::map< std::string, std::vector< ExtendedFact > > facts; /* < Holds facts/references to other XTypes (either by URI or by weak pointer) */
 
-        nl::json property_schema;
+        PropertySchema property_schema;
         nl::json properties;
 
         /// Checks whether the passed pointer is an instance of the base class

@@ -233,37 +233,37 @@ void xtypes::XType::define_property(const std::string& path_to_key,
         throw std::invalid_argument(this->get_classname() + "::define_property(): Property " + path_to_key + " already defined!");
     }
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    this->property_schema[jptr]["type"] = type;
+    this->property_schema.property_types[jptr] = type;
     if (!is_type_matching(path_to_key, default_value))
     {
         throw std::invalid_argument(this->get_classname() + "::define_property: Default value type mismatch. " +
                                     "Defined type " + value_t2string.at(type) + ", but received " + value_t2string.at(default_value.type()));
     }
-    this->property_schema[jptr]["allowed"] = allowed_values;
+    this->property_schema.allowed_values[jptr] = allowed_values;
     if (!is_allowed_value(path_to_key, default_value))
     {
         throw std::invalid_argument(this->get_classname() + "::define_property: Default value " + default_value.dump() + " is not allowed");
     }
-    this->property_schema[jptr]["default"] = default_value;
+    this->property_schema.default_values[jptr] = default_value;
     set_property(path_to_key, default_value);
 }
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
 {
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.contains(jptr);
+    return this->property_schema.property_types.contains(jptr);
 }
 
 nl::json::value_t xtypes::XType::get_property_type(const std::string& path_to_key) const
 {
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.at(jptr).at("type");
+    return this->property_schema.property_types.at(jptr);
 }
 
 std::set<nl::json> xtypes::XType::get_allowed_property_values(const std::string& path_to_key) const
 {
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.at(jptr).at("allowed");
+    return this->property_schema.allowed_values.at(jptr);
 }
 
 bool xtypes::XType::is_allowed_value(const std::string& path_to_key, const nl::json& value) const
@@ -357,6 +357,8 @@ nl::json xtypes::XType::get_properties() const
 
 void xtypes::XType::set_properties(const nl::json &properties, const bool shall_throw)
 {
+    // FIXME: This does not work with JSON properties inside. So the json_pointers have to be constructed from the schema
+    // However, we cannot throw on invalid property keys anymore since they are always valid
     nl::json flattened(properties.flatten());
     for (const auto &[k,v] : flattened.items())
     {

@@ -10,6 +10,14 @@
 namespace nl = nlohmann;
 
 namespace xtypes {
+    /// Holds information about property schemata
+    struct PropertySchema
+    {
+        nl::json property_types;
+        nl::json allowed_values;
+        nl::json default_values;
+    };
+
     /// Holds the informations about a Relation
     struct Relation
     {
