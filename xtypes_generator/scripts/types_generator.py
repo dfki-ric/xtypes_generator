@@ -229,7 +229,6 @@ def parse_yaml(yaml_data, project_name, lang: Language):
             try:
                 if pname in properties:
                     raise ValueError(f"Property {pname} already exists in {classname}")
-                pname = "/"+pname
                 ptype_in = prop["type"]
                 if is_xtype(ptype_in):
                     raise ValueError(f"Type {ptype_in} not allowed in property {pname} in {classname}. Use relations!")
