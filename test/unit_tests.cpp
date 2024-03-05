@@ -42,6 +42,16 @@ TEST_CASE("Test XType construction and interface", "XType")
         all_props["direction"] = "invalid direction";
         REQUIRE_THROWS( my_xtype.set_properties(all_props) );
 
+        SECTION("Test nested properties")
+        {
+            my_xtype.define_property("a/nested/property", nl::json::value_t::string, {}, "with a value");
+            REQUIRE(my_xtype.has_property("a/nested/property"));
+            REQUIRE(my_xtype.get_property("a/nested/property") == "with a value");
+            REQUIRE_THROWS(my_xtype.set_property("a/nested", "bad path"));
+            REQUIRE_NOTHROW(my_xtype.set_property("a/nested/property", "with a new value"));
+            REQUIRE(my_xtype.get_property("a/nested/property") == "with a new value");
+        }
+
         SECTION("Test relation definition and usage")
         {
             REQUIRE(!my_xtype.has_relation("non-existing relation"));
