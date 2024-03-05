@@ -31,6 +31,16 @@ TEST_CASE("Test XType construction and interface", "XType")
         my_xtype.define_property("direction", nl::json::value_t::string, {"in","out"}, "out");
         REQUIRE(my_xtype.get_allowed_property_values("direction") == std::set<nl::json>{"in", "out"});
         REQUIRE_THROWS(my_xtype.set_property("direction", "left"));
+        auto all_props = my_xtype.get_properties();
+        REQUIRE( all_props.contains("a property") );
+        REQUIRE( all_props.contains("an integral property") );
+        REQUIRE( all_props.contains("a real property") );
+        REQUIRE( all_props.contains("direction") );
+        all_props["a property"] = "another value";
+        REQUIRE_NOTHROW( my_xtype.set_properties(all_props) );
+        REQUIRE( my_xtype.get_property("a property") == "another value" );
+        all_props["direction"] = "invalid direction";
+        REQUIRE_THROWS( my_xtype.set_properties(all_props) );
 
         SECTION("Test relation definition and usage")
         {

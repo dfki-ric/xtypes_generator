@@ -232,7 +232,7 @@ void xtypes::XType::define_property(const std::string& path_to_key,
     {
         throw std::invalid_argument(this->get_classname() + "::define_property(): Property " + path_to_key + " already defined!");
     }
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     this->property_schema[jptr]["type"] = type;
     if (!is_type_matching(path_to_key, default_value))
     {
@@ -250,19 +250,19 @@ void xtypes::XType::define_property(const std::string& path_to_key,
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     return this->property_schema.contains(jptr);
 }
 
 nl::json::value_t xtypes::XType::get_property_type(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     return this->property_schema.at(jptr).at("type");
 }
 
 std::set<nl::json> xtypes::XType::get_allowed_property_values(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     return this->property_schema.at(jptr).at("allowed");
 }
 
@@ -336,7 +336,7 @@ void xtypes::XType::set_property(const std::string& path_to_key, const nl::json 
         }
         return;
     }
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     this->properties[jptr] = new_value;
 }
 
@@ -346,7 +346,7 @@ nl::json xtypes::XType::get_property(const std::string& path_to_key) const
     {
         throw std::invalid_argument(this->get_classname() + "::get_property: Property " + path_to_key + " not found.");
     }
-    nl::json::json_pointer jptr("/"+path_to_key);
+    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     return this->properties.at(jptr);
 }
 
@@ -357,7 +357,11 @@ nl::json xtypes::XType::get_properties() const
 
 void xtypes::XType::set_properties(const nl::json &properties, const bool shall_throw)
 {
-    // TODO: Flatten properties, then call set_property()
+    nl::json flattened(properties.flatten());
+    for (const auto &[k,v] : flattened.items())
+    {
+        set_property(k, v, shall_throw);
+    }
 }
 
 void xtypes::XType::define_relation(const std::string& name,
