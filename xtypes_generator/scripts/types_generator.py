@@ -225,29 +225,43 @@ def parse_yaml(yaml_data, project_name, lang: Language):
     properties = {}
     default_template_types = []
     if "properties" in yaml_data:
-        for pname, prop in yaml_data["properties"].items():
-            try:
-                if pname in properties:
-                    raise ValueError(f"Property {pname} already exists in {classname}")
-                ptype_in = prop["type"]
-                if is_xtype(ptype_in):
-                    raise ValueError(f"Type {ptype_in} not allowed in property {pname} in {classname}. Use relations!")
-                pdefault = ""
-                if "default" in prop:
-                    pdefault = parse_default(prop["default"], ptype_in, lang)
-                pallowed = set()
-                if "allowed" in prop:
-                    pallowed = list(parse_allowed(prop["allowed"], ptype_in, lang))
-                # TODO: Since we use json types only, we should modify this function to return the proper JSON type in the given language
-                # However, currently we use convenient getter/setter functions which actually use the correct C++ types
-                ptype, ptempl = parse_type(ptype_in, lang)
-                if ptype.startswith("XType") and not "::" in ptype:
-                    ptype = project_name+"::"+ptype
-                if ptempl is not None:
-                    default_template_types += ptempl
-                properties[pname] = (JsonTypes[ptype_in.split("(")[0].upper()] if ptype_in.split("(")[0].upper() in JsonTypes else None, sorted(pallowed), pdefault, ptype, "advanced_setter" in prop and prop["advanced_setter"])
-            except:
-                raise RuntimeError(f"Error in property definition of {classname}::{pname}: {prop}")
+        for top_key, top_value in yaml_data["properties"].items():
+            # If 'type' is not in top_value keys, we have to recursively resolve all subkeys until we find a 'type'.
+            # For each path from top_key to some 'type' we have to call the code below! That means that we need some form of stack (to not use recursive calls)
+            unresolved = [(top_key, top_value)]
+            resolved = []
+            while len(unresolved) > 0:
+                current_key, current_value = unresolved.pop(0)
+                if "type" not in current_value:
+                    for k,v in current_value.items():
+                        unresolved.append((current_key + "/" + k, v))
+                    continue
+                # Found leaf property
+                resolved.append((current_key, current_value))
+            # For each resolved key, value pair, we create a property entry
+            for pname, prop in resolved:
+                try:
+                    if pname in properties:
+                        raise ValueError(f"Property {pname} already exists in {classname}")
+                    ptype_in = prop["type"]
+                    if is_xtype(ptype_in):
+                        raise ValueError(f"Type {ptype_in} not allowed in property {pname} in {classname}. Use relations!")
+                    pdefault = ""
+                    if "default" in prop:
+                        pdefault = parse_default(prop["default"], ptype_in, lang)
+                    pallowed = set()
+                    if "allowed" in prop:
+                        pallowed = list(parse_allowed(prop["allowed"], ptype_in, lang))
+                    # TODO: Since we use json types only, we should modify this function to return the proper JSON type in the given language
+                    # However, currently we use convenient getter/setter functions which actually use the correct C++ types
+                    ptype, ptempl = parse_type(ptype_in, lang)
+                    if ptype.startswith("XType") and not "::" in ptype:
+                        ptype = project_name+"::"+ptype
+                    if ptempl is not None:
+                        default_template_types += ptempl
+                    properties[pname] = (JsonTypes[ptype_in.split("(")[0].upper()] if ptype_in.split("(")[0].upper() in JsonTypes else None, sorted(pallowed), pdefault, ptype, "advanced_setter" in prop and prop["advanced_setter"])
+                except:
+                    raise RuntimeError(f"Error in property definition of {classname}::{pname}: {prop}")
     relations = {}
     classes = set()
     if "relations" in yaml_data:
