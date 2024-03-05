@@ -18,7 +18,7 @@ namespace nl = nlohmann;
 {
     // Properties
     {% for prop_name, prop in properties.items() -%}
-    this->define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }, {{prop[2]}}{% if inherit -%}, true{% endif %});
+    this->define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }{% if prop[2] -%}, {{prop[2]}}{% endif%}{% if inherit -%}, true{% endif %});
     {% endfor %}
     // Relations
     {% for attr_name, rel in relations.items() -%}

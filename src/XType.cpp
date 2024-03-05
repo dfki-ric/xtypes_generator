@@ -234,18 +234,21 @@ void xtypes::XType::define_property(const std::string& path_to_key,
     }
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     this->property_schema.property_types[jptr] = type;
-    if (!is_type_matching(path_to_key, default_value))
-    {
-        throw std::invalid_argument(this->get_classname() + "::define_property: Default value type mismatch. " +
-                                    "Defined type " + value_t2string.at(type) + ", but received " + value_t2string.at(default_value.type()));
-    }
     this->property_schema.allowed_values[jptr] = allowed_values;
-    if (!is_allowed_value(path_to_key, default_value))
+    if (!default_value.is_null())
     {
-        throw std::invalid_argument(this->get_classname() + "::define_property: Default value " + default_value.dump() + " is not allowed");
+        if (!is_type_matching(path_to_key, default_value))
+        {
+            throw std::invalid_argument(this->get_classname() + "::define_property(): Default value type mismatch. " +
+                                        "Defined type " + value_t2string.at(type) + ", but received " + value_t2string.at(default_value.type()));
+        }
+        if (!is_allowed_value(path_to_key, default_value))
+        {
+            throw std::invalid_argument(this->get_classname() + "::define_property(): Default value " + default_value.dump() + " is not allowed");
+        }
+        this->property_schema.default_values[jptr] = default_value;
+        set_property(path_to_key, default_value);
     }
-    this->property_schema.default_values[jptr] = default_value;
-    set_property(path_to_key, default_value);
 }
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
