@@ -1,34 +1,34 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from base_class.hpp.in
  */
 
 #pragma once
 #include <nlohmann/json.hpp>
 {%- for c in classes %}
-{%- if c != classname and "::" in c %}
+{%- if c != "xtypes::XType" and c != classname and "::" in c and project_name != c.split("::")[0] %}
 #include <{{c.replace("::", "/")}}.hpp>
 {%- endif %}
 {%- endfor %}
 
-{% if inherit and inherit != "XType" and "::" not in inherit -%}#include "{{inherit}}.hpp"{% elif inherit and inherit != "XType" %}#include <{{inherit.replace("::", "/")}}.hpp>{% else %}#include <xtypes_generator/XType.hpp>{% endif %}
+{% if inherit and inherit != "xtypes::XType" and project_name == inherit.split("::")[0] -%}#include "{{inherit.split("::")[-1]}}.hpp"{% elif inherit and inherit != "xtypes::XType" %}#include <{{inherit.replace("::", "/")}}.hpp>{% else %}#include <xtypes_generator/XType.hpp>{% endif %}
 
 namespace nl = nlohmann;
 
 namespace {{project_name}} {
     // Forward Declarations
-    {%- for c in classes %}{% if c != inherit and c != "XType" and "::" not in c%}
-    class {{ c }};
-    using {{ c }}Ptr = std::shared_ptr<{{ c }}>;
-    using {{ c }}CPtr = const std::shared_ptr<{{ c }}>;
-    using Const{{ c }}Ptr = std::shared_ptr<const {{ c }}>;
-    using Const{{ c }}CPtr = const std::shared_ptr<const {{ c }}>;
+    {%- for c in classes %}{% if c != inherit and c != "xtypes::XType" and project_name == c.split("::")[0]%}
+    class {{ c.split("::")[-1] }};
+    using {{ c.split("::")[-1] }}Ptr = std::shared_ptr<{{ c.split("::")[-1] }}>;
+    using {{ c.split("::")[-1] }}CPtr = const std::shared_ptr<{{ c.split("::")[-1] }}>;
+    using Const{{ c.split("::")[-1] }}Ptr = std::shared_ptr<const {{ c.split("::")[-1] }}>;
+    using Const{{ c.split("::")[-1] }}CPtr = const std::shared_ptr<const {{ c.split("::")[-1] }}>;
     {% endif %}{% endfor %}
 
-  class _{{ classname }} : public {% if inherit -%}{{inherit}}{% else %}xtypes::XType{% endif %}
+    class _{{ classname.split("::")[-1] }} : public {% if inherit -%}{{inherit}}{% else %}xtypes::XType{% endif %}
     {
         public:
             /// Constructor
-            _{{ classname }}(const std::string& classname="{{project_name}}::{{classname}}");
+            _{{ classname.split("::")[-1] }}(const std::string& classname="{{classname}}");
             {% if custom_uri %}
             /// Custom URI generator (overrides default implementation in XType)
             std::string uri() const override;

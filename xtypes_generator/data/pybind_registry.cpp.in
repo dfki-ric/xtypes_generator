@@ -1,3 +1,6 @@
+/**
+ * {{ generator_comment }} from pybind_registry.cpp.in
+ */
 #include <pybind11/pybind11.h>
 #include <nlohmann/json.hpp>
 #include <pybind11_json/pybind11_json.hpp>
@@ -9,11 +12,11 @@ namespace py = pybind11;
 namespace nl = nlohmann;
 
 PYBIND11_EXPORT
-void PYBIND11_INIT_PROJECTREGISTRY(py::module_& m) {
+void PYBIND11_INIT_{{project_name.upper()}}__PROJECTREGISTRY(py::module_& m) {
  // NOTE: The 3rd argument is a different default holder. Default is std::unique_ptr but we need std::shared_ptr.
  py::class_<{{project_name}}::ProjectRegistry, xtypes::XTypeRegistry, std::shared_ptr<{{project_name}}::ProjectRegistry> >(m, "ProjectRegistry")
     .def(py::init())
     {%- for classname in derived_classnames %}
     .def("register_class", &{{project_name}}::ProjectRegistry::register_class<{{project_name}}::{{classname}}>)
-    {% endfor -%};
+    {%- endfor -%};
 }

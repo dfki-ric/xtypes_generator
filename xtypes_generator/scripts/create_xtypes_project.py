@@ -76,6 +76,41 @@ def main(args):
 
             out_file.write(text)
 
+    try:
+        cmakeconfig_path = import_resources_files("xtypes_generator").joinpath("data/config.cmake.in")
+    except NameError:
+        cmakeconfig_path = pkg_resources.resource_filename("xtypes_generator", "data/config.cmake.in")
+
+    with open(cmakeconfig_path, "r") as in_file:
+        with open(os.path.join(args.project_name, "cmake", args.project_name+"-config.cmake.in"), "w") as out_file:
+            text = in_file.read()
+
+            text = text.replace("@PROJECT_NAME@", args.project_name)
+            if args.version is not None:
+                text = text.replace("@VERSION@", "VERSION "+args.version)
+            else:
+                text = text.replace("@VERSION@", "")
+            if args.description is not None:
+                text = text.replace("@DESCRIPTION@", "DESCRIPTION "+args.description)
+            else:
+                text = text.replace("@DESCRIPTION@", "")
+
+            out_file.write(text)
+
+    try:
+        pybind_custom_binds_path = import_resources_files("xtypes_generator").joinpath("data/pybind_custom_binds.cpp.in")
+    except NameError:
+        pybind_custom_binds_path = pkg_resources.resource_filename("xtypes_generator", "data/pybind_custom_binds.cpp.in")
+
+    with open(pybind_custom_binds_path, "r") as in_file:
+        os.makedirs(os.path.join(args.project_name, "pybind"))
+        with open(os.path.join(args.project_name, "pybind", "_pyCustomBinds.cpp"), "w") as out_file:
+            text = in_file.read()
+
+            text = text.replace("@PROJECT_NAME@", args.project_name.upper())
+
+            out_file.write(text)
+
     #os.chdir(os.path.join(args.project_name))
     #os.makedirs(os.path.join(args.project_name, "build"), exist_ok=True)
     # import shutil

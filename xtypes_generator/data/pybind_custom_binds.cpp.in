@@ -1,0 +1,13 @@
+#include <pybind11/pybind11.h>
+#include <pybind11_json/pybind11_json.hpp>
+
+namespace py = pybind11;
+
+// declare here the binding methods you have defined in your files
+// void PYBIND_INIT_@PROJECT_NAME@__METHODS(py::module_& m);
+
+PYBIND11_EXPORT
+void PYBIND11_INIT_@PROJECT_NAME@__CUSTOM_BINDS(py::module_& m) {
+  // call here the binding methods you have defined in your files
+  // PYBIND_INIT_@PROJECT_NAME@__METHODS(m);
+}

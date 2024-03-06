@@ -1,8 +1,8 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from skeleton.cpp.in
  */
 
-#include "{{classname}}.hpp"
+#include "{{classname.split("::")[-1]}}.hpp"
 
 // Including used XType classes
 {%- for c in classes %}
@@ -14,9 +14,9 @@
 using namespace {{project_name}};
 
 // Constructor
-{{project_name}}::{{classname}}::{{classname}}(const std::string& classname) : _{{classname}}(classname)
+{{classname}}::{{classname.split("::")[-1]}}(const std::string& classname) : {{project_name}}::_{{classname.split("::")[-1]}}(classname)
 {
-    // NOTE: Properties and relations have been created in _{{classname}} constructor
+    // NOTE: Properties and relations have been created in {{project_name}}::_{{classname.split("::")[-1]}} constructor
     // You can add custom properties with
     // this->define_property("name", json type, { allowed_value1, allowed_value2, ...}, default_value [, true if you want to override a base class property ] );
     // Most importantly, if you use the registry to instantiate other XTypes not yet specified in the template
@@ -25,14 +25,14 @@ using namespace {{project_name}};
 }
 
 // Static identifier
-const std::string {{project_name}}::{{classname}}::classname = "{{ project_name }}::{{ classname }}";
+const std::string {{classname}}::classname = "{{classname}}";
 
 // Method implementations
 {%- for method_name, method in methods %}
 // {{method[0]}}
 {%- if method[1] %}
 {%- for ttype in method[7] %}
-{{method[5] if not method[4] else ttype}} {{project_name}}::{{classname}}::{{method_name}}(
+{{method[5] if not method[4] else ttype}} {{classname}}::{{method_name}}(
 {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0] if not arg[2] else ttype}}{%- else %}{{(arg[0] if not arg[2] else ttype).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if (arg[0] if not arg[2] else ttype) not in classes -%}&{%- endif %} {{arg_name}}
 {%- if not loop.last %}, {% endif %}
 {%- endfor %}){% if method[8] and not method[6] %} const{% endif %}
@@ -41,7 +41,7 @@ const std::string {{project_name}}::{{classname}}::classname = "{{ project_name 
 }
 {%- endfor -%}
 {%- else %}
-{{method[5]}} {{project_name}}::{{classname}}::{{method_name}}(
+{{method[5]}} {{classname}}::{{method_name}}(
 {%- for arg_name, arg in method[3] -%}const {% if not arg[3] -%}{{arg[0]}}{%- else %}{{(arg[0]).replace(arg[4], arg[4]+"Ptr")}}{%- endif %}{% if not arg[5] -%}&{%- endif %} {{arg_name}}
 {%- if not loop.last %}, {% endif %}
 {%- endfor %}){% if method[8] and not method[6] %} const{% endif %}
@@ -54,7 +54,7 @@ const std::string {{project_name}}::{{classname}}::classname = "{{ project_name 
 // Overrides for setters of properties
 {%- for prop_name, prop in properties.items() %}
 {%- if prop[4] %}
-void {{project_name}}::{{classname}}::set_{{prop_name}}(const {{prop[3]}}& value)
+void {{classname}}::set_{{prop_name}}(const {{prop[3]}}& value)
 {
     // Add your advanced code here
     // Finally call the overridden method
@@ -67,7 +67,7 @@ void {{project_name}}::{{classname}}::set_{{prop_name}}(const {{prop[3]}}& value
 {%- for rel_name, rel in relations.items() %}
 {%- if rel[7] %}
 {%- for cname in rel[1] %}
-void {{project_name}}::{{classname}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
+void {{classname}}::add_{{rel_name}}({{cname}}CPtr xtype, const nl::json& props)
 {
     // Add your advanced code here
     // Finally call the overridden method

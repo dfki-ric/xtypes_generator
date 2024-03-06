@@ -1,9 +1,9 @@
 /**
- * {{ generator_comment }}
+ * {{ generator_comment }} from skeleton.hpp.in
  */
 
 #pragma once
-#include "_{{classname}}.hpp"
+#include "_{{classname.split("::")[-1]}}.hpp"
 
 
 namespace {{project_name}} {
@@ -18,11 +18,11 @@ namespace {{project_name}} {
     {% endif %}
     {% endfor %}
 
-    class {{ classname }} : public _{{ classname }}
+    class {{ classname.split("::")[-1] }} : public {{project_name}}::_{{ classname.split("::")[-1] }}
     {
         public:
             /// Constructor
-            {{ classname }}(const std::string& classname = {{classname}}::classname);
+            {{ classname.split("::")[-1] }}(const std::string& classname = {{classname.split("::")[-1]}}::classname);
 
             // Static indentifier
             /// Useful to lookup the derived classname at compile time
@@ -65,8 +65,8 @@ namespace {{project_name}} {
             {%- endfor %}
     };
 
-    using {{ classname }}Ptr = std::shared_ptr<{{ classname }}>;
-    using {{ classname }}CPtr = const std::shared_ptr<{{ classname }}> ;
-    using Const{{ classname }}Ptr = std::shared_ptr<const {{ classname }}> ;
-    using Const{{ classname }}CPtr = const std::shared_ptr<const {{ classname }}> ;
+    using {{ classname.split("::")[-1] }}Ptr = std::shared_ptr<{{ classname.split("::")[-1] }}>;
+    using {{ classname.split("::")[-1] }}CPtr = const std::shared_ptr<{{ classname.split("::")[-1] }}> ;
+    using Const{{ classname.split("::")[-1] }}Ptr = std::shared_ptr<const {{ classname.split("::")[-1] }}> ;
+    using Const{{ classname.split("::")[-1] }}CPtr = const std::shared_ptr<const {{ classname.split("::")[-1] }}> ;
 }
