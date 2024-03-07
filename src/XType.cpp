@@ -235,21 +235,16 @@ void xtypes::XType::define_property(const std::string& path_to_key,
     nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
     this->property_schema.property_types[jptr] = type;
     this->property_schema.allowed_values[jptr] = allowed_values;
+    this->property_schema.default_values[jptr] = default_value;
     if (!default_value.is_null())
     {
-        if (!is_type_matching(path_to_key, default_value))
-        {
-            throw std::invalid_argument(this->get_classname() + "::define_property(): Default value type mismatch. " +
-                                        "Defined type " + value_t2string.at(type) + ", but received " + value_t2string.at(default_value.type()));
-        }
-        if (!is_allowed_value(path_to_key, default_value))
-        {
-            throw std::invalid_argument(this->get_classname() + "::define_property(): Default value " + default_value.dump() + " is not allowed");
-        }
-        this->property_schema.default_values[jptr] = default_value;
+        // We use set_property() to check for compatibility IFF a default value has been provided
+        set_property(path_to_key, default_value);
+    } else {
+        // If no default value has been provided, we have to make sure, that the key exists in properties
+        // Otherwise we will get throws on properties whose definition is ok but no default value has been assigned yet
+        this->properties[jptr] = default_value;
     }
-    // We always have to set the property (even if it is null)
-    set_property(path_to_key, default_value);
 }
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
