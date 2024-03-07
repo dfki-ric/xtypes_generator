@@ -247,8 +247,9 @@ void xtypes::XType::define_property(const std::string& path_to_key,
             throw std::invalid_argument(this->get_classname() + "::define_property(): Default value " + default_value.dump() + " is not allowed");
         }
         this->property_schema.default_values[jptr] = default_value;
-        set_property(path_to_key, default_value);
     }
+    // We always have to set the property (even if it is null)
+    set_property(path_to_key, default_value);
 }
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
