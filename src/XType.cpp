@@ -228,78 +228,34 @@ void xtypes::XType::define_property(const std::string& path_to_key,
                      const nl::json& default_value,
                      const bool& override)
 {
-    if (this->has_property(path_to_key) && !override)
-    {
-        throw std::invalid_argument(this->get_classname() + "::define_property(): Property " + path_to_key + " already defined!");
-    }
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    this->property_schema.property_types[jptr] = type;
-    this->property_schema.allowed_values[jptr] = allowed_values;
-    this->property_schema.default_values[jptr] = default_value;
-    if (!default_value.is_null())
-    {
-        // We use set_property() to check for compatibility IFF a default value has been provided
-        set_property(path_to_key, default_value);
-    } else {
-        // If no default value has been provided, we have to make sure, that the key exists in properties
-        // Otherwise we will get throws on properties whose definition is ok but no default value has been assigned yet
-        this->properties[jptr] = default_value;
-    }
+    this->property_schema.define_property(path_to_key, type, allowed_values, default_value, override);
+    // Make sure that the key exists in properties (type has already been checked before)
+    this->properties[PropertySchema::to_pointer(path_to_key)] = default_value;
 }
 
 bool xtypes::XType::has_property(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.property_types.contains(jptr);
+    return this->property_schema.has_property(path_to_key);
 }
 
 nl::json::value_t xtypes::XType::get_property_type(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.property_types.at(jptr);
+    return this->property_schema.get_property_type(path_to_key);
 }
 
 std::set<nl::json> xtypes::XType::get_allowed_property_values(const std::string& path_to_key) const
 {
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->property_schema.allowed_values.at(jptr);
+    return this->property_schema.get_allowed_property_values(path_to_key);
 }
 
 bool xtypes::XType::is_allowed_value(const std::string& path_to_key, const nl::json& value) const
 {
-    auto allowed_values = this->get_allowed_property_values(path_to_key);
-    if (allowed_values.size() < 1)
-    {
-        // No constraint set, so allow it
-        return true;
-    }
-    if (allowed_values.count(value) > 0)
-    {
-        // value is explicitly allowed
-        return true;
-    }
-    // The value is not allowed
-    return false;
+    return this->property_schema.is_allowed_value(path_to_key, value);
 }
 
 bool xtypes::XType::is_type_matching(const std::string& path_to_key, const nl::json &value) const
 {
-    // Types match directly
-    if (this->get_property_type(path_to_key) == value.type())
-        return true;
-    // Sometimes an unsigned/signed integer shall be assigned to an signed/unsigned value
-    // NOTE: This can happen if nlohmann::json interprets an signed value as being an unsigned value
-    if (this->get_property_type(path_to_key) == nl::json::value_t::number_integer && value.type() == nl::json::value_t::number_unsigned)
-        return true; // TODO: Check that unsigned value < signed positive max!
-    if (this->get_property_type(path_to_key) == nl::json::value_t::number_unsigned && value.type() == nl::json::value_t::number_integer)
-        return value >= 0U;
-    // The initial type is discarded, so we match anything
-    if (this->get_property_type(path_to_key) == nl::json::value_t::discarded)
-        return true;
-    // For dictionaries we have to handle the empty dict initialization case
-    if (this->get_property_type(path_to_key) == nl::json::value_t::object && value.type() == nl::json::value_t::null)
-        return true;
-    return false;
+    return this->property_schema.is_type_matching(path_to_key, value);
 }
 
 void xtypes::XType::set_property(const std::string& path_to_key, const nl::json &new_value, const bool shall_throw)
@@ -335,8 +291,7 @@ void xtypes::XType::set_property(const std::string& path_to_key, const nl::json 
         }
         return;
     }
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    this->properties[jptr] = new_value;
+    this->properties[PropertySchema::to_pointer(path_to_key)] = new_value;
 }
 
 nl::json xtypes::XType::get_property(const std::string& path_to_key) const
@@ -345,8 +300,7 @@ nl::json xtypes::XType::get_property(const std::string& path_to_key) const
     {
         throw std::invalid_argument(this->get_classname() + "::get_property: Property " + path_to_key + " not found.");
     }
-    nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
-    return this->properties.at(jptr);
+    return this->properties.at(PropertySchema::to_pointer(path_to_key));
 }
 
 nl::json xtypes::XType::get_properties() const

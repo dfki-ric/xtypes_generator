@@ -16,6 +16,91 @@ namespace xtypes {
         nl::json property_types;
         nl::json allowed_values;
         nl::json default_values;
+
+        static nl::json::json_pointer to_pointer(const std::string& path_to_key)
+        {
+            nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
+            return jptr;
+        }
+
+        void define_property(const std::string& path_to_key,
+                     const nl::json::value_t& type,
+                     const std::set<nl::json>& allowed_values,
+                     const nl::json& default_value,
+                     const bool& override)
+        {
+            if (this->has_property(path_to_key) && !override)
+            {
+                throw std::invalid_argument("PropertySchema::define_property(): Property " + path_to_key + " already defined!");
+            }
+            nl::json::json_pointer jptr(to_pointer(path_to_key));
+            this->property_types[jptr] = type;
+            this->allowed_values[jptr] = allowed_values;
+            if (!default_value.is_null())
+            {
+                // Check if type matches
+                if (!this->is_type_matching(path_to_key, default_value))
+                {
+                    throw std::invalid_argument("PropertySchema::define_property(): Invalid default value " + default_value.dump() + " for " + path_to_key);
+                }
+            }
+            this->default_values[jptr] = default_value;
+        }
+
+        bool has_property(const std::string& path_to_key) const
+        {
+            nl::json::json_pointer jptr(to_pointer(path_to_key));
+            return this->property_types.contains(jptr);
+        }
+
+        nl::json::value_t get_property_type(const std::string& path_to_key) const
+        {
+            nl::json::json_pointer jptr(to_pointer(path_to_key));
+            return this->property_types.at(jptr);
+        }
+
+        std::set<nl::json> get_allowed_property_values(const std::string& path_to_key) const
+        {
+            nl::json::json_pointer jptr(to_pointer(path_to_key));
+            return this->allowed_values.at(jptr);
+        }
+
+        bool is_allowed_value(const std::string& path_to_key, const nl::json& value) const
+        {
+            auto allowed_values = this->get_allowed_property_values(path_to_key);
+            if (allowed_values.size() < 1)
+            {
+                // No constraint set, so allow it
+                return true;
+            }
+            if (allowed_values.count(value) > 0)
+            {
+                // value is explicitly allowed
+                return true;
+            }
+            // The value is not allowed
+            return false;
+        }
+
+        bool is_type_matching(const std::string& path_to_key, const nl::json &value) const
+        {
+            // Types match directly
+            if (this->get_property_type(path_to_key) == value.type())
+                return true;
+            // Sometimes an unsigned/signed integer shall be assigned to an signed/unsigned value
+            // NOTE: This can happen if nlohmann::json interprets an signed value as being an unsigned value
+            if (this->get_property_type(path_to_key) == nl::json::value_t::number_integer && value.type() == nl::json::value_t::number_unsigned)
+                return true; // TODO: Check that unsigned value < signed positive max!
+            if (this->get_property_type(path_to_key) == nl::json::value_t::number_unsigned && value.type() == nl::json::value_t::number_integer)
+                return value >= 0U;
+            // The initial type is discarded, so we match anything
+            if (this->get_property_type(path_to_key) == nl::json::value_t::discarded)
+                return true;
+            // For dictionaries we have to handle the empty dict initialization case
+            if (this->get_property_type(path_to_key) == nl::json::value_t::object && value.type() == nl::json::value_t::null)
+                return true;
+            return false;
+        }
     };
 
     /// Holds the informations about a Relation
