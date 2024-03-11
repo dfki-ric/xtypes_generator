@@ -200,9 +200,18 @@ XTypeCPtr xtypes::XType::import_from(const nl::json& spec, XTypeRegistryCPtr reg
         {
             const std::string &other_uri(entry["target"]);
             const nl::json &props(entry["edge_properties"]);
-            nl::json updated_props = rel.properties;
-            for (auto& [k,v] : updated_props.items())
-                if (props.contains(k)) v = props.at(k);
+            // Check if properties match the schema
+            nl::json updated_props;
+            nl::json flattened = rel.property_schema.property_types.flatten();
+            for (const auto& [k,v] : flattened.items())
+            {
+                if (k.empty()) continue;
+                nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
+                if (props.contains(k) && rel.property_schema.is_type_matching(k, props.at(k)) && rel.property_schema.is_allowed_value(k, props.at(k)))
+                    updated_props[k] = props.at(k);
+                else
+                    updated_props[k] = rel.property_schema.default_values.at(k);
+            }
             // NOTE: Here we cannot load the other xtype by URI! Otherwise we would trigger a full load of the whole (sub)graph
             // That means, that we cannot use add_fact() but have to add a raw fact
             ExtendedFact new_fact(other_uri, updated_props);
@@ -313,6 +322,7 @@ void xtypes::XType::set_properties(const nl::json &properties, const bool shall_
     nl::json flattened(this->property_schema.property_types.flatten());
     for (const auto &[k,v] : flattened.items())
     {
+        if (k.empty()) continue;
         nl::json::json_pointer jptr(k);
         if (properties.contains(jptr))
             set_property(k, properties.at(jptr), shall_throw);
@@ -325,7 +335,7 @@ void xtypes::XType::define_relation(const std::string& name,
                           std::set<std::string> to_classnames,
                           const Constraint& constraint,
                           const DeletePolicy& delpolicy,
-                          const nl::json& properties,
+                          const PropertySchema& property_schema,
                           const RelationType& super_relation_type,
                           const bool& inverse,
                           const bool& override)
@@ -341,7 +351,7 @@ void xtypes::XType::define_relation(const std::string& name,
         to_classnames,
         constraint,
         delpolicy,
-        properties};
+        property_schema};
 
     // Bind relation definition to name and store the direction of the facts/relation instances
     // Also initialize empty list in facts
@@ -509,9 +519,20 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
 
     // use default relation properties and update it by given properties
     const Relation &rel(this->get_relation(name));
-    nl::json updated_props = rel.properties;
-    for (auto& [k,v] : updated_props.items())
-        if (props.contains(k)) v = props.at(k);
+    // Check if properties match the schema
+    nl::json updated_props;
+    nl::json flattened = rel.property_schema.property_types.flatten();
+    for (const auto& [k,v] : flattened.items())
+    {
+        if (k.empty()) continue;
+        nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
+        if (props.contains(k) && rel.property_schema.is_type_matching(k, props.at(k)) && rel.property_schema.is_allowed_value(k, props.at(k)))
+        {
+            updated_props[k] = props.at(k);
+        } else {
+            updated_props[k] = rel.property_schema.default_values.at(k);
+        }
+    }
 
     const bool is_fact_known(this->has_facts(name));
     ExtendedFact new_fact(other, updated_props);
