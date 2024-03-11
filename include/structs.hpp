@@ -17,6 +17,14 @@ namespace xtypes {
         nl::json allowed_values;
         nl::json default_values;
 
+        nl::json to_json() const {
+            nl::json out;
+            out["property_types"] = property_types;
+            out["allowed_values"] = allowed_values;
+            out["default_values"] = default_values;
+            return out;
+        }
+
         static nl::json::json_pointer to_pointer(const std::string& path_to_key)
         {
             nl::json::json_pointer jptr(path_to_key.front() == '/' ? path_to_key : "/"+path_to_key);
@@ -112,7 +120,7 @@ namespace xtypes {
         std::set<std::string> to_classnames;
         Constraint constraint;
         DeletePolicy delete_policy;
-        nl::json properties;
+        PropertySchema property_schema;
 
         bool operator!=(const Relation& other) const
         {
@@ -125,27 +133,13 @@ namespace xtypes {
             bool other_in_from = std::includes(other.from_classnames.begin(), other.from_classnames.end(), from_classnames.begin(), from_classnames.end());
             bool to_in_other = std::includes(to_classnames.begin(), to_classnames.end(), other.to_classnames.begin(), other.to_classnames.end());
             bool other_in_to = std::includes(other.to_classnames.begin(), other.to_classnames.end(), to_classnames.begin(), to_classnames.end());
-            //for (const auto& e : from_classnames)
-            //    std::cout << e << " ";
-            //std::cout << "\n";
-            //for (const auto& e : other.from_classnames)
-            //    std::cout << e << " ";
-            //std::cout << "\n";
-            //for (const auto& e : to_classnames)
-            //    std::cout << e << " ";
-            //std::cout << "\n";
-            //for (const auto& e : other.to_classnames)
-            //    std::cout << e << " ";
-            //std::cout << "\n";
-            //std::cout << from_in_other << " " << other_in_from << " " << to_in_other << " " << other_in_to << "\n";
             return relation_type == other.relation_type &&
                    subrelation_of == other.subrelation_of &&
                    // NOTE: Relations are considered to be equal to another if the domain and codomain are subsets of the other domains or vice versa
                    (from_in_other || other_in_from) &&
                    (to_in_other || other_in_to) &&
                    constraint == other.constraint &&
-                   delete_policy == other.delete_policy &&
-                   properties == other.properties;
+                   delete_policy == other.delete_policy;
         }
 
         nl::json operator[](std::string key) const {
@@ -160,7 +154,7 @@ namespace xtypes {
             out["to_classnames"] = to_classnames;
             out["constraint"] = Constraint2Str[(int)constraint];
             out["delete_policy"] = DeletePolicy2Str[(int)delete_policy];
-            out["properties"] = properties;
+            out["property_schema"] = property_schema.to_json();
             return out;
         }
     };
