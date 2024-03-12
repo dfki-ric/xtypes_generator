@@ -220,12 +220,11 @@ def flatten_properties(properties: dict) -> dict:
     """
     resolved = {}
     for top_key, top_value in properties.items():
-        # If 'type' is not in top_value keys, we have to recursively resolve all subkeys until we find a 'type'.
-        # For each path from top_key to some 'type' we have to call the code below! That means that we need some form of stack (to not use recursive calls)
+        # We have to flatten the dict until we find a leaf 'type' entry in the values
         unresolved = [(top_key, top_value)]
         while len(unresolved) > 0:
             current_key, current_value = unresolved.pop(0)
-            if "type" not in current_value:
+            if ("type" not in current_value) or (isinstance(current_value["type"], dict)):
                 for k,v in current_value.items():
                     unresolved.append((current_key + "/" + k, v))
                 continue
