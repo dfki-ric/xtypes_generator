@@ -68,8 +68,8 @@ namespace {{project_name}} {
 
             // Setters/Getters for properties
             {%- for prop_name, prop in properties.items() %}
-            const {{prop[3]}} get_{{prop_name}}() const { return this->get_property("{{prop_name}}"); }
-            virtual void set_{{prop_name}}(const {{prop[3]}}& value) { this->set_property("{{prop_name}}", value); }
+            const {{prop[3]}} get_{{(prop_name).replace("/","_")}}() const { return this->get_property("{{prop_name}}"); }
+            virtual void set_{{(prop_name).replace("/","_")}}(const {{prop[3]}}& value) { this->set_property("{{prop_name}}", value); }
             {%- if loop.last %};{% endif %}
             {%- endfor %}
 

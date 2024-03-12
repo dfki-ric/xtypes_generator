@@ -35,6 +35,10 @@ properties:
     a_small_integer:
         type: INTEGER
         default: 0
+    a:
+        nested:
+            property:
+                type: ...
 ```
 
 Pleases see the [Type](#type) section and also doc/template.yml for further information on how to specify other types.

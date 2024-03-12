@@ -24,6 +24,19 @@ namespace pybind11 { namespace detail {
 
 PYBIND11_EXPORT
 void PYBIND11_INIT_XTYPES_GENERATOR__STRUCTS(py::module_& m) {
+    py::class_<PropertySchema>(m, "PropertySchema")
+        .def(py::init())
+        .def_readwrite("property_types", &PropertySchema::property_types)
+        .def_readwrite("allowed_values", &PropertySchema::allowed_values)
+        .def_readwrite("default_values", &PropertySchema::default_values)
+        .def("define_property", &PropertySchema::define_property)
+        .def("has_property", &PropertySchema::has_property)
+        .def("get_property_type", &PropertySchema::get_property_type)
+        .def("get_allowed_property_values", &PropertySchema::get_allowed_property_values)
+        .def("is_allowed_value", &PropertySchema::is_allowed_value)
+        .def("is_type_matching", &PropertySchema::is_type_matching)
+        .def("to_json", &PropertySchema::to_json);
+
     py::class_<Relation>(m, "Relation")
         .def(py::init())
         .def("to_json", &Relation::to_json)
@@ -33,7 +46,7 @@ void PYBIND11_INIT_XTYPES_GENERATOR__STRUCTS(py::module_& m) {
         .def_readwrite("to_classnames", &Relation::to_classnames)
         .def_readwrite("constraint", &Relation::constraint)
         .def_readwrite("delete_policy", &Relation::delete_policy)
-        .def_readwrite("properties", &Relation::properties)
+        .def_readwrite("property_schema", &Relation::property_schema)
         .def("__getitem__", &Relation::operator[])
         .def("__eq__", &Relation::operator==)
         .def("__ne__", &Relation::operator!=);
