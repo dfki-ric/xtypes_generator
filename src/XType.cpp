@@ -207,10 +207,10 @@ XTypeCPtr xtypes::XType::import_from(const nl::json& spec, XTypeRegistryCPtr reg
             {
                 if (k.empty()) continue;
                 nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
-                if (props.contains(k) && rel.property_schema.is_type_matching(k, props.at(k)) && rel.property_schema.is_allowed_value(k, props.at(k)))
-                    updated_props[k] = props.at(k);
+                if (props.contains(jptr) && rel.property_schema.is_type_matching(k, props.at(jptr)) && rel.property_schema.is_allowed_value(k, props.at(jptr)))
+                    updated_props[jptr] = props.at(jptr);
                 else
-                    updated_props[k] = rel.property_schema.default_values.at(k);
+                    updated_props[jptr] = rel.property_schema.default_values.at(jptr);
             }
             // NOTE: Here we cannot load the other xtype by URI! Otherwise we would trigger a full load of the whole (sub)graph
             // That means, that we cannot use add_fact() but have to add a raw fact
@@ -526,11 +526,11 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
     {
         if (k.empty()) continue;
         nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
-        if (props.contains(k) && rel.property_schema.is_type_matching(k, props.at(k)) && rel.property_schema.is_allowed_value(k, props.at(k)))
+        if (props.contains(jptr) && rel.property_schema.is_type_matching(k, props.at(jptr)) && rel.property_schema.is_allowed_value(k, props.at(jptr)))
         {
-            updated_props[k] = props.at(k);
+            updated_props[jptr] = props.at(jptr);
         } else {
-            updated_props[k] = rel.property_schema.default_values.at(k);
+            updated_props[jptr] = rel.property_schema.default_values.at(jptr);
         }
     }
 

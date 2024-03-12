@@ -32,10 +32,10 @@ namespace xtypes {
         }
 
         void define_property(const std::string& path_to_key,
-                     const nl::json::value_t& type,
-                     const std::set<nl::json>& allowed_values,
-                     const nl::json& default_value,
-                     const bool& override)
+                     const nl::json::value_t& type = nl::json::value_t::discarded,
+                     const std::set<nl::json>& allowed_values = {},
+                     const nl::json& default_value = {},
+                     const bool& override = false)
         {
             if (this->has_property(path_to_key) && !override)
             {
