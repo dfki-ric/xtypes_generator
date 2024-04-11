@@ -2,18 +2,28 @@
     <description brief="XTypes Generator">
         This package is a parser and C++ representation for the YAML-represented XTypes
     </description>
-    <author>MODKOM-Team</author>
-    <author_email>modkom@dfki.de</author_email>
-    <maintainer>Henning Wiedemann/henning.wiedemann@dfki.de</maintainer>
-    <copyright></copyright>
-    <license></license>
+    <!-- Authors -->
+    <author email="henning.wiedemann@dfki.de">Henning Wiedemann</author>
+    <author email="moritz.schilling@dfki.de">Moritz Schilling</author>
+    <author email="priyanka.chowdhury@dfki.de">Priyanka Chowdhury</author>
+    <author email="malte.langosz@dfki.de">Malte Langosz </author>
+    <!-- Maintainers -->
+    <maintainer email="henning.wiedemann@dfki.de">Henning Wiedemann</maintainer>
+    <maintainer email="moritz.schilling@dfki.de">Moritz Schilling</maintainer>
+    <maintainer email="priyanka.chowdhury@dfki.de">Priyanka Chowdhury</maintainer>
+    <maintainer email="malte.langosz@dfki.de">Malte Langosz </maintainer>
+    <!-- Legal Info -->
+    <copyright>DFKI</copyright>
+    <license>BSD 3-Clause</license>
+    <!-- Dependencies -->
     <depend package="python3" />
     <depend package="python3-jinja2" />
     <depend package="python3-yaml" />
     <depend package="pybind11" />
     <depend package="pybind11_json" />
     <depend package="nlohmann-json" />
-    <stage>0</stage>
+    <!-- Additional Metadata -->
+    <stage>1</stage>
     <activity>active</activity>
     <keywords>
         <keyword>utilities</keyword>
