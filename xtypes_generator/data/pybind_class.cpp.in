@@ -91,6 +91,6 @@ void PYBIND11_INIT_CLASS_{{classname.upper()|replace("::", "__")}}(py::module_& 
         {%- endif %}
         {%- endfor %}
         {%- for prop_name in properties.keys() %}
-        .def_property("{{prop_name}}", &{{classname}}::get_{{prop_name}}, &{{classname}}::set_{{prop_name}})
+        .def_property("{{(prop_name).replace("/","_")}}", &{{classname}}::get_{{(prop_name).replace("/","_")}}, &{{classname}}::set_{{(prop_name).replace("/","_")}})
         {%- endfor %};
 }

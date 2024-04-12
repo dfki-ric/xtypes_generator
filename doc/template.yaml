@@ -45,6 +45,11 @@ properties:
     type: STRING
     default: "\"B\""
     allowed: ["\"A\"","\"B\"","\"C\""]
+  a:
+      nested:
+          property:
+              type: STRING
+              default: "\"with a value\""
 
 # Relations to other XType classes
 # At first we have the local name of the relation (as an vector holding all XTypes targeted by the relation's facts)
