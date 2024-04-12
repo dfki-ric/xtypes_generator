@@ -59,6 +59,6 @@ if [ "$#" -eq 1 ]; then
 fi
 
 
-build "https://github.com/nlohmann/json.git" "develop" "v3.10.5" "json_new" "$PREFIX"
+build "https://github.com/nlohmann/json.git" "develop" "v3.10.5" "json_new" "-DJSON_BuildTests=OFF $PREFIX"
 build "https://github.com/pybind/pybind11.git" "stable" "" "pybind11" "$PREFIX"
 build "https://github.com/pybind/pybind11_json.git" "master" "0.2.13" "pybind11_json" "$PREFIX"
