@@ -9,11 +9,11 @@ together with the [Robotics Group](http://www.informatik.uni-bremen.de/robotik/i
 of the [University of Bremen](http://www.uni-bremen.de/en.html).
 
 ## What are XTypes?
-XTypes are an object oriented type definition which like a normal class hold properties and can have member functions;
-but further more they can hold relations to other XTypes.
-Due their neat implementation XTypes instances are out of the box ready to be stored to databases.
+XTypes are an object-oriented type definition which like a normal class hold properties and can have member functions;
+but furthermore, they can hold relations to other XTypes.
+Due to their neat implementation, XTypes instances are out of the box ready to be stored in databases.
 
-Moreover they come directly with python bindings, so you don't have to worry about bind everything yourself. It's already done for you.
+Moreover, they come directly with Python bindings, so you don't have to worry about binding everything yourself. It's already done for you.
 
 The XTypes are defined as templates.
 An exemplary template can be found [here](doc/template.yaml).
@@ -23,38 +23,42 @@ Please have a look in [Templates.md](doc/Templates.md) on how to write your own 
 To use XTypes as the basis of your project you have to do the following:
 
 1. Install this project [see Installation Instructions](#Installation)
-2. Setup your project directory. You can do this using `xtypes_generator create_xtypes_project`
+2. Setup your project directory. You can do this using `xtypes_generator create_xtypes_project`.
 3. Write the CMakeLists.txt file for your project. And add:
-  ```cmake
-  find_package(xtypes_generator REQUIRED)
-  xtypes_project()
-  ```
-  Further info [here](#CMake)
+    ```cmake
+    find_package(xtypes_generator REQUIRED)
+    xtypes_project()
+    ```
+    Further info [here](#CMake)
+  
 4. Define your types using template files like [doc/template.yaml](doc/template.yaml)
 5. Run cmake once in the build directory:
-  ```bash
-  cd $YOUR_PROJECT
-  mkdir build
-  cd build
-  cmake ..
-  ```
-  Now all files are generated for you.
+    ```bash
+    cd $YOUR_PROJECT
+    mkdir build
+    cd build
+    cmake ..
+    ```
+    Now all files are generated for you.
+
 6. Copy the skeleton files for your XTypes from build/auto_generated_files/skeleton_files to your source directory, e.g.:
-  ```bash
-  cd $YOUR_PROJECT
-  cp -rn build/auto_generated_files/skeleton_files/src/* src/
-  ```
-  If need to make adaptations you can copy the header skeleton files as well.
-  You only need to have the files in your include/ src/ directories you want to override.
+    ```bash
+    cd $YOUR_PROJECT
+    cp -rn build/auto_generated_files/skeleton_files/src/* src/
+    ```
+    If need to make adaptations you can copy the header skeleton files as well.
+    You only need to have the files in your include/ src/ directories you want to override.
+
 7. Fill those files with your source code.
+
 8. Do a full build and install and you will have C++ Library and python module ready to go.
-  ```bash
-  cd $YOUR_PROJECT
-  mkdir build
-  cd build
-  cmake ..
-  make install
-  ```
+    ```bash
+    cd $YOUR_PROJECT
+    mkdir build
+    cd build
+    cmake ..
+    make install
+    ```
 
 ---
 # Installation
@@ -80,7 +84,7 @@ Please make sure you have the following dependencies installed
   ```
 
 ### Autoproj
-1. Add this repository to you autoproj setup.
+1. Add this repository to your autoproj setup.
 2. Then run in your autoproj workspace:
   ```bash
   aup xtypes_generator
@@ -94,7 +98,7 @@ Please make sure you have the following dependencies installed
 We define a new CMake macro called `xtypes_project` to customize the execution you can use the following arguments, but normally you should be fine using just `xtypes_project()`.
 
 Flags:
-  - `DEACTIVATE_PYTHON_BINDINGS`: If you don't want to build the python bindings to your code
+  - `DEACTIVATE_PYTHON_BINDINGS`: If you don't want to build the Python bindings to your code
 
 Arguments:
   - `SOURCE_DIRECTORY`:
@@ -117,7 +121,7 @@ Arguments:
 
 
 ## Tools/Scripts
-This project comes with several scripts/tools you can access via `xtypes_generator` command in you terminal.
+This project comes with several scripts/tools you can access via `xtypes_generator` command in your terminal.
 See `xtypes_generator -h` and `xtypes_generator COMMAND -h` for more info on those tools.
 
 ### `create_xtypes_project`
@@ -143,7 +147,7 @@ For details see:
  - `xtypes_files_get_and_copy -h`
 
 # Documentation
-To create the doxygen documentation, simply do:
+To create the Doxygen documentation, simply do:
 ```bash
   cd xtypes_generator/build
   cmake ..

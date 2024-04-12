@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Prepare Build
-          command: ./.circleci/prepare_build.sh -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
+          command: ./.circleci/prepare_build.sh
       - run:
           name: chmod install script
           command: chmod +x install_dependencies.sh
