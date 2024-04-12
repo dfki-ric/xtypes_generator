@@ -7,6 +7,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Prepare Build
+          command: ./.circleci/prepare_build.sh -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
+      - run:
           name: chmod install script
           command: chmod +x install_dependencies.sh
       - run:
@@ -20,9 +23,6 @@ jobs:
             cd build
             cmake -DROCK_TEST_ENABLED=ON ..
             make -j4 install
-      - run:
-          name: Prepare Build
-          command: ./.circleci/prepare_build.sh -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
       - run:
           name: Run C++ Tests
           command: make cpp_test
