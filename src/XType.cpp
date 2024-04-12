@@ -200,9 +200,18 @@ XTypeCPtr xtypes::XType::import_from(const nl::json& spec, XTypeRegistryCPtr reg
         {
             const std::string &other_uri(entry["target"]);
             const nl::json &props(entry["edge_properties"]);
-            nl::json updated_props = rel.properties;
-            for (auto& [k,v] : updated_props.items())
-                if (props.contains(k)) v = props.at(k);
+            // Check if properties match the schema
+            nl::json updated_props;
+            nl::json flattened = rel.property_schema.property_types.flatten();
+            for (const auto& [k,v] : flattened.items())
+            {
+                if (k.empty()) continue;
+                nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
+                if (props.contains(jptr) && rel.property_schema.is_type_matching(k, props.at(jptr)) && rel.property_schema.is_allowed_value(k, props.at(jptr)))
+                    updated_props[jptr] = props.at(jptr);
+                else
+                    updated_props[jptr] = rel.property_schema.default_values.at(jptr);
+            }
             // NOTE: Here we cannot load the other xtype by URI! Otherwise we would trigger a full load of the whole (sub)graph
             // That means, that we cannot use add_fact() but have to add a raw fact
             ExtendedFact new_fact(other_uri, updated_props);
@@ -222,152 +231,101 @@ XTypeCPtr xtypes::XType::import_from(const nl::json& spec, XTypeRegistryCPtr reg
     return reg->get_by_uri(result->uri());
 }
 
-// TODO
-void xtypes::XType::define_property(const std::string& name,
+void xtypes::XType::define_property(const std::string& path_to_key,
                      const nl::json::value_t& type,
                      const std::set<nl::json>& allowed_values,
                      const nl::json& default_value,
                      const bool& override)
 {
-    if (this->has_property(name) && !override)
-    {
-        throw std::invalid_argument(this->get_classname() + "::define_property(): Property " + name + " already defined!");
-    }
-    this->property_types[name] = type;
-    if (!is_type_matching(name, default_value))
-    {
-        throw std::invalid_argument(this->get_classname() + "::define_property: Default value type mismatch. " +
-                                    "Defined type " + value_t2string.at(type) + ", but received " + value_t2string.at(default_value.type()));
-    }
-    this->allowed_property_values[name] = allowed_values;
-    if (!is_allowed_value(name, default_value))
-    {
-        throw std::invalid_argument(this->get_classname() + "::define_property: Default value " + default_value.dump() + " is not allowed");
-    }
-    this->properties[name] = default_value;
+    this->property_schema.define_property(path_to_key, type, allowed_values, default_value, override);
+    // Make sure that the key exists in properties (type has already been checked before)
+    this->properties[PropertySchema::to_pointer(path_to_key)] = default_value;
 }
 
-// TODO
-bool xtypes::XType::has_property(const std::string &name) const
+bool xtypes::XType::has_property(const std::string& path_to_key) const
 {
-    return this->properties.count(name) > 0;
+    return this->property_schema.has_property(path_to_key);
 }
 
-// TODO
-nl::json::value_t xtypes::XType::get_property_type(const std::string &name) const
+nl::json::value_t xtypes::XType::get_property_type(const std::string& path_to_key) const
 {
-    return this->property_types.at(name);
+    return this->property_schema.get_property_type(path_to_key);
 }
 
-// TODO
-std::set<nl::json> xtypes::XType::get_allowed_property_values(const std::string& name) const
+std::set<nl::json> xtypes::XType::get_allowed_property_values(const std::string& path_to_key) const
 {
-    return this->allowed_property_values.at(name);
+    return this->property_schema.get_allowed_property_values(path_to_key);
 }
 
-// TODO
-bool xtypes::XType::is_allowed_value(const std::string& name, const nl::json& value)
+bool xtypes::XType::is_allowed_value(const std::string& path_to_key, const nl::json& value) const
 {
-    auto allowed_values = this->get_allowed_property_values(name);
-    if (allowed_values.size() < 1)
-    {
-        // No constraint set, so allow it
-        return true;
-    }
-    if (allowed_values.count(value) > 0)
-    {
-        // value is explicitly allowed
-        return true;
-    }
-    // The value is not allowed
-    return false;
+    return this->property_schema.is_allowed_value(path_to_key, value);
 }
 
-// TODO
-bool xtypes::XType::is_type_matching(const std::string &name, const nl::json &value)
+bool xtypes::XType::is_type_matching(const std::string& path_to_key, const nl::json &value) const
 {
-    // Types match directly
-    if (this->get_property_type(name) == value.type())
-        return true;
-    // Sometimes an unsigned/signed integer shall be assigned to an signed/unsigned value
-    // NOTE: This can happen if nlohmann::json interprets an signed value as being an unsigned value
-    if (this->get_property_type(name) == nl::json::value_t::number_integer && value.type() == nl::json::value_t::number_unsigned)
-        return true; // TODO: Check that unsigned value < signed positive max!
-    if (this->get_property_type(name) == nl::json::value_t::number_unsigned && value.type() == nl::json::value_t::number_integer)
-        return value >= 0U;
-    // The initial type is discarded, so we match anything
-    if (this->get_property_type(name) == nl::json::value_t::discarded)
-        return true;
-    // For dictionaries we have to handle the empty dict initialization case
-    if (this->get_property_type(name) == nl::json::value_t::object && value.type() == nl::json::value_t::null)
-        return true;
-    return false;
+    return this->property_schema.is_type_matching(path_to_key, value);
 }
 
-// TODO
-void xtypes::XType::set_property(const std::string &name, const nl::json &new_value, const bool shall_throw)
+void xtypes::XType::set_property(const std::string& path_to_key, const nl::json &new_value, const bool shall_throw)
 {
     // Check if the property has been defined
-    if (!this->has_property(name))
+    if (!this->has_property(path_to_key))
     {
         if (shall_throw)
         {
-            throw std::invalid_argument(this->get_classname() + "::set_property: Property " + name + " not found.");
+            throw std::invalid_argument(this->get_classname() + "::set_property: Property " + path_to_key + " not found.");
         }
         return;
     }
     // We should not be able to change the type here, so we check it
-    if (shall_throw && this->get_property_type(name) == nl::json::value_t::discarded)
+    if (shall_throw && this->get_property_type(path_to_key) == nl::json::value_t::discarded)
     {
-        std::cerr << this->get_classname() + "::set_property: No type defined for property " + name + ". Type safety isn't assured." << std::endl;
+        std::cerr << this->get_classname() + "::set_property: No type defined for property " + path_to_key + ". Type safety isn't assured." << std::endl;
     }
-    else if (!is_type_matching(name, new_value)) // handle empty dict
-    {
-        if (shall_throw)
-        {
-            throw std::invalid_argument(this->get_classname() + "::set_property: Property " + name + ": Type mismatch. " +
-                                        "Expected " + value_t2string.at(this->get_property_type(name)) + ", but received " + value_t2string.at(new_value.type()));
-        }
-        return;
-    }
-    else if (!is_allowed_value(name, new_value))
+    else if (!is_type_matching(path_to_key, new_value)) // handle empty dict
     {
         if (shall_throw)
         {
-            throw std::invalid_argument(this->get_classname() + "::set_property: Value " + new_value.dump() + " not allowed for property " + name);
+            throw std::invalid_argument(this->get_classname() + "::set_property: Property " + path_to_key + ": Type mismatch. " +
+                                        "Expected " + value_t2string.at(this->get_property_type(path_to_key)) + ", but received " + value_t2string.at(new_value.type()));
         }
         return;
     }
-    this->properties[name] = new_value;
+    else if (!is_allowed_value(path_to_key, new_value))
+    {
+        if (shall_throw)
+        {
+            throw std::invalid_argument(this->get_classname() + "::set_property: Value " + new_value.dump() + " not allowed for property " + path_to_key);
+        }
+        return;
+    }
+    this->properties[PropertySchema::to_pointer(path_to_key)] = new_value;
 }
 
-// TODO
-nl::json xtypes::XType::get_property(const std::string &name) const
+nl::json xtypes::XType::get_property(const std::string& path_to_key) const
 {
-    if (!this->has_property(name))
+    if (!this->has_property(path_to_key))
     {
-        throw std::invalid_argument(this->get_classname() + "::get_property: Property " + name + " not found.");
+        throw std::invalid_argument(this->get_classname() + "::get_property: Property " + path_to_key + " not found.");
     }
-    return this->properties.at(name);
+    return this->properties.at(PropertySchema::to_pointer(path_to_key));
 }
 
-// TODO
 nl::json xtypes::XType::get_properties() const
 {
-    nl::json result;
-    for (const auto &[name, value] : this->properties)
-    {
-        result[name] = value;
-    }
-    return result;
+    return this->properties;
 }
 
-// TODO
 void xtypes::XType::set_properties(const nl::json &properties, const bool shall_throw)
 {
-    for (const auto &[name, val] : properties.items()) // requires c++17 and up
+    nl::json flattened(this->property_schema.property_types.flatten());
+    for (const auto &[k,v] : flattened.items())
     {
-        this->set_property(name, val, shall_throw);
+        if (k.empty()) continue;
+        nl::json::json_pointer jptr(k);
+        if (properties.contains(jptr))
+            set_property(k, properties.at(jptr), shall_throw);
     }
 }
 
@@ -377,7 +335,7 @@ void xtypes::XType::define_relation(const std::string& name,
                           std::set<std::string> to_classnames,
                           const Constraint& constraint,
                           const DeletePolicy& delpolicy,
-                          const nl::json& properties,
+                          const PropertySchema& property_schema,
                           const RelationType& super_relation_type,
                           const bool& inverse,
                           const bool& override)
@@ -393,7 +351,7 @@ void xtypes::XType::define_relation(const std::string& name,
         to_classnames,
         constraint,
         delpolicy,
-        properties};
+        property_schema};
 
     // Bind relation definition to name and store the direction of the facts/relation instances
     // Also initialize empty list in facts
@@ -561,9 +519,20 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
 
     // use default relation properties and update it by given properties
     const Relation &rel(this->get_relation(name));
-    nl::json updated_props = rel.properties;
-    for (auto& [k,v] : updated_props.items())
-        if (props.contains(k)) v = props.at(k);
+    // Check if properties match the schema
+    nl::json updated_props;
+    nl::json flattened = rel.property_schema.property_types.flatten();
+    for (const auto& [k,v] : flattened.items())
+    {
+        if (k.empty()) continue;
+        nl::json::json_pointer jptr(PropertySchema::to_pointer(k));
+        if (props.contains(jptr) && rel.property_schema.is_type_matching(k, props.at(jptr)) && rel.property_schema.is_allowed_value(k, props.at(jptr)))
+        {
+            updated_props[jptr] = props.at(jptr);
+        } else {
+            updated_props[jptr] = rel.property_schema.default_values.at(jptr);
+        }
+    }
 
     const bool is_fact_known(this->has_facts(name));
     ExtendedFact new_fact(other, updated_props);

@@ -212,6 +212,26 @@ def is_template(property_type: str) -> (bool, int):
         return int(property_type[10])
     return property_type.startswith("TEMPLATE")
 
+def flatten_properties(properties: dict) -> dict:
+    """
+    Flattens the properties to JSON pointer key and value
+    :param properties: the unflattened properties
+    :return: the flattened properties
+    """
+    resolved = {}
+    for top_key, top_value in properties.items():
+        # We have to flatten the dict until we find a leaf 'type' entry in the values
+        unresolved = [(top_key, top_value)]
+        while len(unresolved) > 0:
+            current_key, current_value = unresolved.pop(0)
+            if ("type" not in current_value) or (isinstance(current_value["type"], dict)):
+                for k,v in current_value.items():
+                    unresolved.append((current_key + "/" + k, v))
+                continue
+            # Found leaf property
+            resolved[current_key] = current_value
+    return resolved
+
 # Parse the yaml files and collect all necessary info for the template engine
 def parse_yaml(yaml_data, project_name, lang: Language):
     """
@@ -229,7 +249,9 @@ def parse_yaml(yaml_data, project_name, lang: Language):
     properties = {}
     default_template_types = []
     if "properties" in yaml_data:
-        for pname, prop in yaml_data["properties"].items():
+        resolved = flatten_properties(yaml_data["properties"])
+        # For each resolved key, value pair, we create a property entry
+        for pname, prop in resolved.items():
             try:
                 if pname in properties:
                     raise ValueError(f"Property {pname} already exists in {classname}")
@@ -274,12 +296,32 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                         cname = f"{project_name}::{cname}"
                     classes.add(cname)
                     rclassnames.add(cname)
-                props = {}
+                relation_properties = {}
                 if "properties" in rel:
-                    props = {(k, v) for k, v in rel["properties"].items()}
-                    props = repr(props).replace("(", "{").replace(")", "}").replace("'", '"')
-                    props = props.replace("True", "true")
-                    props = props.replace("False", "false")
+                    resolved = flatten_properties(rel["properties"])
+                    for pname, prop in resolved.items():
+                        try:
+                            if pname in relation_properties:
+                                raise ValueError(f"Property {pname} already exists in {classname}::{attrname}")
+                            ptype_in = prop["type"]
+                            if is_xtype(ptype_in):
+                                raise ValueError(f"Type {ptype_in} not allowed in property {pname} in {classname}::{attrname}.")
+                            pdefault = ""
+                            if "default" in prop:
+                                pdefault = parse_default(prop["default"], ptype_in, lang)
+                            pallowed = set()
+                            if "allowed" in prop:
+                                pallowed = list(parse_allowed(prop["allowed"], ptype_in, lang))
+                            # TODO: Since we use json types only, we should modify this function to return the proper JSON type in the given language
+                            # However, currently we use convenient getter/setter functions which actually use the correct C++ types
+                            ptype, ptempl = parse_type(ptype_in, lang)
+                            if ptype.startswith("XType") and not "::" in ptype:
+                                ptype = project_name+"::"+ptype
+                            if ptempl is not None:
+                                default_template_types += ptempl
+                            relation_properties[pname] = (JsonTypes[ptype_in.split("(")[0].upper()] if ptype_in.split("(")[0].upper() in JsonTypes else None, sorted(pallowed), pdefault, ptype)
+                        except:
+                            raise RuntimeError(f"Error in property definition of {classname}::{attrname}::{pname}: {prop}")
                 rinverse = False
                 if "inverse" in rel:
                     rinverse = bool(rel["inverse"])
@@ -302,7 +344,7 @@ def parse_yaml(yaml_data, project_name, lang: Language):
                 advanced_setter = False
                 if "advanced_setter" in rel:
                     advanced_setter = bool(rel["advanced_setter"])
-                relations[attrname] = (rname, sorted(rclassnames), constraint, delete_policy, props, subtype_of, rinverse, advanced_setter)
+                relations[attrname] = (rname, sorted(rclassnames), constraint, delete_policy, relation_properties, subtype_of, rinverse, advanced_setter)
             except:
                 raise RuntimeError(f"Error in relation definition of {classname}::{attrname}: {rel}")
     custom_uri = None

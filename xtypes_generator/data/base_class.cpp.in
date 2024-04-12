@@ -20,12 +20,17 @@ namespace nl = nlohmann;
 {
     // Properties
     {% for prop_name, prop in properties.items() -%}
-    this->define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }, {{prop[2]}}{% if inherit -%}, true{% endif %});
+    this->define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }{% if prop[2] -%}, {{prop[2]}}{% else -%}, {}{% endif%}{% if inherit -%}, true{% endif %});
     {% endfor %}
     // Relations
     {% for attr_name, rel in relations.items() -%}
-    //this->define_relation("{{attr_name}}", RelationType::{{rel[0]}}, {{classname}}, { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, Constraint::{{rel[2]}}, DeletePolicy::{{rel[3]}}, {{rel[4]}}, RelationType::{{rel[5]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
-    this->{{rel[0]}}("{{attr_name}}", { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, {{rel[4]}}, {{rel[6]}}{% if inherit -%}, true{% endif %});
+    {
+        xtypes::PropertySchema schema;
+        {% for prop_name, prop in rel[4].items() -%}
+            schema.define_property("{{prop_name}}", {{prop[0]}}, { {% for allowed in prop[1] -%}{{ allowed }}{% if not loop.last %}, {% endif %}{% endfor %} }{% if prop[2] -%}, {{prop[2]}}{% else -%}, {}{% endif%}{% if inherit -%}, true{% endif %});
+        {% endfor %}
+        this->{{rel[0]}}("{{attr_name}}", { {% for cname in rel[1] -%}"{{cname}}"{% if not loop.last %}, {% endif %}{% endfor %} }, schema, {{rel[6]}}{% if inherit -%}, true{% endif %});
+    }
     {% endfor %}
     // Here, we register ourselves and the xtypes we use to our registry
     {% for c in classes %}
