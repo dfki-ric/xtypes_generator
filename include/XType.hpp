@@ -339,6 +339,11 @@ namespace xtypes {
             define_relation(name, RelationType::CONDITIONABLE_ON, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, property_schema, RelationType::NONE, inverse, override);
         }
 
+        void CONFIGURED_FOR(const std::string& name, const std::set<std::string>& other_classnames, const PropertySchema& property_schema={}, bool inverse = false, bool override = false)
+        {
+            define_relation(name, RelationType::CONFIGURED_FOR, {this->get_classname()}, other_classnames, Constraint::MANY2MANY, DeletePolicy::DELETESOURCE, property_schema, RelationType::NONE, inverse, override);
+        }
+
     protected:
         /// Every XType gets a registry instance which has to be used when instantiating new XType(s) during runtime
         std::weak_ptr< XTypeRegistry > registry;

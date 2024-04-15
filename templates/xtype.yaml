@@ -524,3 +524,18 @@ methods:
     - name: override
       type: BOOLEAN
       default: False
+  CONFIGURED_FOR:
+    arguments:
+    - name: name
+      type: STRING
+    - name: other_classnames
+      type: SET(STRING)
+    - name: properties
+      type: JSON
+      default: "nl::json{}"
+    - name: inverse
+      type: BOOLEAN
+      default: false
+    - name: override
+      type: BOOLEAN
+      default: False

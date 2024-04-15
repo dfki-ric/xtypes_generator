@@ -56,7 +56,8 @@ namespace xtypes {
         ATTACHED_TO = 17,
         CAN_SAMPLE = 18,
         CONDITIONABLE_ON = 19,
-        IMPLEMENTS = 20
+        IMPLEMENTS = 20,
+        CONFIGURED_FOR = 21
     };
     static const char* RelationType2Str[] = {
         "HAS",
@@ -79,6 +80,8 @@ namespace xtypes {
         "ATTACHED_TO",
         "CAN_SAMPLE",
         "CONDITIONABLE_ON",
+        "IMPLEMENTS",
+        "CONFIGURED_FOR"
     };
 
     static const std::map<nlohmann::json::value_t, std::string> value_t2string = {
