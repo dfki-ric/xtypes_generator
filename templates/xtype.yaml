@@ -60,6 +60,9 @@ methods:
     description: "This methods defines a property and sets its default value"
   get_property_type:
     const: True
+    arguments:
+      - name: name
+        type: STRING
     returns:
       type: JSONTYPE
     description: "This methods defines a property and sets its default value"
@@ -139,9 +142,9 @@ methods:
       - name: delete_policy
         type: xtypes::DeletePolicy
         default: "xtypes::DeletePolicy::DELETENONE"
-      - name: default_properties
-        type: JSON
-        default: "nl::json{}"
+      - name: property_schema
+        type: xtypes::PropertySchema
+        default: "{}"
       - name: super_relation_type
         type: xtypes::RelationType
         default: "xtypes::RelationType::NONE"
@@ -230,9 +233,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -245,9 +248,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -260,9 +263,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -275,9 +278,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -290,9 +293,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -305,9 +308,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -320,9 +323,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -335,9 +338,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -350,9 +353,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -365,9 +368,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -380,9 +383,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -395,9 +398,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -410,9 +413,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -425,9 +428,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -440,9 +443,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse>
       type: BOOLEAN
       default: false
@@ -455,9 +458,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -470,9 +473,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -485,9 +488,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -500,9 +503,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -515,9 +518,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
