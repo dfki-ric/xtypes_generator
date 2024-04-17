@@ -533,9 +533,9 @@ methods:
       type: STRING
     - name: other_classnames
       type: SET(STRING)
-    - name: properties
-      type: JSON
-      default: "nl::json{}"
+    - name: property_schema
+      type: xtypes::PropertySchema
+      default: "{}"
     - name: inverse
       type: BOOLEAN
       default: false
