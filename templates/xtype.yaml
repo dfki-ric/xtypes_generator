@@ -535,7 +535,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
