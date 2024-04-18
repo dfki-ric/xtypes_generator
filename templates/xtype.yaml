@@ -144,7 +144,7 @@ methods:
         default: "xtypes::DeletePolicy::DELETENONE"
       - name: property_schema
         type: xtypes::PropertySchema
-        default: "{}"
+        default: "xtypes::PropertySchema{}"
       - name: super_relation_type
         type: xtypes::RelationType
         default: "xtypes::RelationType::NONE"
@@ -235,7 +235,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -250,7 +250,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -265,7 +265,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -280,7 +280,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -295,7 +295,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -310,7 +310,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -325,7 +325,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -340,7 +340,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -355,7 +355,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -370,7 +370,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -385,7 +385,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -400,7 +400,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -415,7 +415,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -430,7 +430,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -445,7 +445,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse>
       type: BOOLEAN
       default: false
@@ -460,7 +460,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -475,7 +475,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -490,7 +490,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -505,7 +505,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
@@ -520,7 +520,7 @@ methods:
       type: SET(STRING)
     - name: property_schema
       type: xtypes::PropertySchema
-      default: "{}"
+      default: "xtypes::PropertySchema{}"
     - name: inverse
       type: BOOLEAN
       default: false
