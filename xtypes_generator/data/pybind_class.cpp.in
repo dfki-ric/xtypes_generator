@@ -83,11 +83,11 @@ void PYBIND11_INIT_CLASS_{{classname.upper()|replace("::", "__")}}(py::module_& 
         {%- if rel[1]|length > 1 %}
         {%- for cname in rel[1] %}
         .def("add_{{rel_name}}", py::overload_cast<const {{cname}}Ptr, const nl::json&>(&{{classname}}::add_{{rel_name}}),
-            py::arg("xtype"), py::arg("props") = nl::json{})
+            py::arg("xtype"), py::arg("props") =nl::json())
         {%- endfor %}
         {%- else %}
         .def("add_{{rel_name}}", &{{classname}}::add_{{rel_name}},
-            py::arg("xtype"), py::arg("props") = nl::json{})
+            py::arg("xtype"), py::arg("props") = nl::json())
         {%- endif %}
         {%- endfor %}
         {%- for prop_name in properties.keys() %}
