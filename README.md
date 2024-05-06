@@ -1,6 +1,8 @@
+CircleCI build and test:
+Master: [![CircleCI](https://circleci.com/gh/dfki-ric/xtypes_generator/tree/master.svg?style=svg)](https://circleci.com/gh/dfki-ric/xtypes_generator/tree/master)
 # X-Types Generator
 
-This repository provides the XType base class as well all necessary tools to generate your custom XTypes.
+This repository provides the XType base class as well as all necessary tools to generate your custom XTypes.
 
 The xtypes_generator was initiated and is currently developed at the
 [Robotics Innovation Center](http://robotik.dfki-bremen.de/en/startpage.html) of the
