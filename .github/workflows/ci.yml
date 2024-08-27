@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pybind11-dev \
+            pybind11-json-dev \
+            python3-pip 
+          pip3 install pyyaml
+          pip3 install jinja2
+      - name: Install Python dependencies
+        run: |
+          pip3 install --upgrade pybind11 pyyaml jinja2
+
+      - name: Prepare build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build project
+        run: |
+          make -C build -j2
+
+      - name: Run C++ Tests
+        run: |
+          make -C build cpp_test
