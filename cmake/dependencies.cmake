@@ -60,6 +60,6 @@ message(STATUS "PYTHON_SITELIB_INSTALL_DIR: ${PYTHON_SITELIB_INSTALL_DIR}")
 # PYBIND11 Python Binding #
 ###########################
 
-find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} REQUIRED)
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
 find_package(pybind11 REQUIRED)
 find_package(pybind11_json REQUIRED)
