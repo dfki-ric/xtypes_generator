@@ -1,6 +1,14 @@
-CircleCI build and test:
+## CI Status
 
-Master: [![CircleCI](https://circleci.com/gh/dfki-ric/xtypes_generator/tree/master.svg?style=svg)](https://circleci.com/gh/dfki-ric/xtypes_generator/tree/master)
+| Operating System | Build Status                                                                                  |
+|------------------|-----------------------------------------------------------------------------------------------|
+| Ubuntu (x64)     | [![CI Status](https://github.com/dfki-ric/xtypes_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/dfki-ric/xtypes_generator/actions) |
+
+
+## Installation
+
+Follow the instructions to install the project.
+
 # X-Types Generator
 
 This repository provides the XType base class as well as all necessary tools to generate your custom XTypes.
