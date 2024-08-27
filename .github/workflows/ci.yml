@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake pkg-config libncurses5-dev python3-jinja2 python3-yaml python3-pip libboost-all-dev nlohmann-json3-dev
+          sudo apt-get install -y build-essential cmake pkg-config python3-jinja2 python3-yaml python3-pip libboost-all-dev nlohmann-json3-dev
 
       - name: Prepare build
         run: |
@@ -33,15 +33,12 @@ jobs:
 
       - name: Build project
         run: |
-          cd build
-          make -j2 
+          make -C build -j2
 
       - name: Run C++ Tests
         run: |
-          cd build
-          make cpp_test
+          make -C build cpp_test
 
       - name: Run Python Tests
         run: |
-          cd build
-          make py_test
+          make -C build py_test
