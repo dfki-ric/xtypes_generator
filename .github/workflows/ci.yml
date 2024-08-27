@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config libncurses5-dev python3-jinja2 python3-yaml python3-pip libboost-all-dev
+
+      - name: Prepare build
+        run: |
+          mkdir build
+          cd build
+          cmake -DROCK_TEST_ENABLED=ON ..
+
+      - name: Build project
+        run: |
+          cd build
+          make -j2 
+
+      - name: Run C++ Tests
+        run: |
+          cd build
+          make cpp_test
+
+      - name: Run Python Tests
+        run: |
+          cd build
+          make py_test
