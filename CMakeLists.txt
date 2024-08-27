@@ -18,9 +18,6 @@ write_basic_package_version_file(${CMAKE_BINARY_DIR}/cmake/xtypes_generator-conf
 configure_file(
    ${CMAKE_SOURCE_DIR}/cmake/Tools.cmake.in
    ${CMAKE_BINARY_DIR}/cmake/${PROJECT_NAME}Tools.cmake @ONLY)
-message(STATUS "Debug: Checking xtypes_generatorTools.cmake")
-file(READ "${CMAKE_BINARY_DIR}/cmake/xtypes_generatorTools.cmake" CONTENTS)
-message(STATUS "Contents of xtypes_generatorTools.cmake: ${CONTENTS}")
 
 include(${CMAKE_BINARY_DIR}/cmake/${PROJECT_NAME}Tools.cmake)
 
