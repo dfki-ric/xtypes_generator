@@ -4,6 +4,7 @@ jobs:
   build_and_test:
     docker:
       - image: ubuntu:latest
+    resource_class: large  # Adjust resource class as needed
     steps:
       - checkout
       - run:
@@ -15,14 +16,20 @@ jobs:
       - run:
           name: run install script
           command: ./install_dependencies.sh
-
+      - run:
+          name: Add Swap Space
+          command: |
+            sudo fallocate -l 2G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
       - run:
           name: Build Project
           command: |
             mkdir build
             cd build
             cmake -DROCK_TEST_ENABLED=ON ..
-            make
+            make -j2 
       - run:
           name: Run C++ Tests
           command: |
