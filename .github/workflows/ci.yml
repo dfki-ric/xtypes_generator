@@ -23,7 +23,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake pkg-config python3-jinja2 python3-yaml python3-pip libboost-all-dev nlohmann-json3-dev  pybind11-dev pybind11-json-dev python3-yaml
+          sudo apt-get install -y \
+            pybind11-dev \
+            pybind11-json-dev \
+            python3-pip 
+          pip3 install pyyaml
 
       - name: Prepare build
         run: |
