@@ -29,7 +29,9 @@ jobs:
             python3-pip 
           pip3 install pyyaml
           pip3 install jinja2
-
+      - name: Install Python dependencies
+        run: |
+          pip3 install --upgrade pybind11 pyyaml jinja2
 
       - name: Prepare build
         run: |
