@@ -24,6 +24,7 @@ if (NOT DEFINED ${PYTHON_EXECUTABLE})
     message(STATUS "Using autoproj python: $ENV{AUTOPROJ_CURRENT_ROOT}/install/bin/python")
   else()
     # or finally we use the default system python version
+    find_package(Python 3 REQUIRED COMPONENTS Interpreter Development)
     set(PYTHON_EXECUTABLE "python")
     message(STATUS "Using default python.")
   endif()
