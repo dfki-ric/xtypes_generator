@@ -22,7 +22,7 @@ jobs:
             mkdir build
             cd build
             cmake -DROCK_TEST_ENABLED=ON ..
-            make -j4 install
+            make install
       - run:
           name: Run C++ Tests
           command: make cpp_test
