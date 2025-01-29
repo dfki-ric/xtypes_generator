@@ -539,6 +539,7 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
     if (is_fact_known)
     {
         // If fact is already known, update edge properties and return
+        // FIXME: When the edge properties have been updated and we have an matching inverse relation, his edge properties do not get updated!!!!
         auto it = std::find(facts.at(name).begin(), facts.at(name).end(), new_fact);
         if (it != facts.at(name).end())
         {
