@@ -541,11 +541,10 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
     // If we have facts, try to find new_fact
     bool fact_already_exists = false;
     bool properties_changed = false;
-    std::vector< ExtendedFact >::iterator existing_fact(facts.at(name).end());
     if (have_facts)
     {
         // If fact is already known, update edge properties
-        existing_fact = std::find(facts.at(name).begin(), facts.at(name).end(), new_fact);
+        auto existing_fact = std::find(facts.at(name).begin(), facts.at(name).end(), new_fact);
         if (existing_fact != facts.at(name).end())
         {
             fact_already_exists = true;
