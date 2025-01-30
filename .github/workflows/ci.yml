@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - find_python3
   pull_request:
     branches:
       - master
