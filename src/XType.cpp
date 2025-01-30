@@ -534,41 +534,62 @@ void xtypes::XType::add_fact(const std::string &name, XTypeCPtr other, const nl:
         }
     }
 
-    const bool is_fact_known(this->has_facts(name));
+    // Check if we already have facts
+    const bool have_facts(this->has_facts(name));
     ExtendedFact new_fact(other, updated_props);
-    if (is_fact_known)
+
+    // If we have facts, try to find new_fact
+    bool fact_already_exists = false;
+    bool properties_changed = false;
+    std::vector< ExtendedFact >::iterator existing_fact(facts.at(name).end());
+    if (have_facts)
     {
-        // If fact is already known, update edge properties and return
-        // FIXME: When the edge properties have been updated and we have an matching inverse relation, his edge properties do not get updated!!!!
-        auto it = std::find(facts.at(name).begin(), facts.at(name).end(), new_fact);
-        if (it != facts.at(name).end())
+        // If fact is already known, update edge properties
+        existing_fact = std::find(facts.at(name).begin(), facts.at(name).end(), new_fact);
+        if (existing_fact != facts.at(name).end())
         {
+            fact_already_exists = true;
             // Always update target uri
             // NOTE: If we dont do this, an (now) valid fact stays invalid
-            it->target_uri(it->target_uri());
-            it->edge_properties = updated_props;
-            return;
+            existing_fact->target_uri(existing_fact->target_uri());
+            // Check if properties have changed
+            if (existing_fact->edge_properties != updated_props)
+            {
+                existing_fact->edge_properties = updated_props;
+                properties_changed = true;
+            }
         }
+
+        // If the fact exists and properties have not changed, we can exit
+        // NOTE: This is the terminal condition for mutual add_fact() calls (see below)
+        if (fact_already_exists && !properties_changed)
+            return;
     }
 
-    // We have a new fact
-    // Get cardinality
-    Constraint constraint(rel.constraint);
-    // Adjust cardinality by relation_dir
-    const bool forward(this->get_relations_dir(name));
-    if (!forward)
+    // When we are here, we either have a new fact or an existing fact has been modified
+    
+    if (!fact_already_exists)
     {
-        if (constraint == Constraint::ONE2MANY)
-            constraint = Constraint::MANY2ONE;
-        else if (constraint == Constraint::MANY2ONE)
-            constraint = Constraint::ONE2MANY;
+        // We have a new fact, so we have to check and register it
+        // Get cardinality
+        Constraint constraint(rel.constraint);
+        // Adjust cardinality by relation_dir
+        const bool forward(this->get_relations_dir(name));
+        if (!forward)
+        {
+            if (constraint == Constraint::ONE2MANY)
+                constraint = Constraint::MANY2ONE;
+            else if (constraint == Constraint::MANY2ONE)
+                constraint = Constraint::ONE2MANY;
+        }
+        // Check cardinality constraints
+        if (((constraint == Constraint::MANY2ONE) || (constraint == Constraint::ONE2ONE)) && have_facts && (this->facts.at(name).size() > 0))
+            throw std::length_error(this->get_classname() + "::add_fact("+name+"): Cardinality constraint on does not allow adding another fact");
+        this->facts[name].push_back(new_fact);
     }
-    // Check cardinality constraints
-    if (((constraint == Constraint::MANY2ONE) || (constraint == Constraint::ONE2ONE)) && is_fact_known && (this->facts.at(name).size() > 0))
-        throw std::length_error(this->get_classname() + "::add_fact("+name+"): Cardinality constraint on does not allow adding another fact");
-    this->facts[name].push_back(new_fact);
 
     // Auto-fill a matching inverse relation
+    // NOTE: This has to be done in both cases (new fact or modified fact)
     const Relation our_rel = this->get_relation(name);
     const bool our_forward = this->get_relations_dir(name);
     // Try to find a matching relation at other
