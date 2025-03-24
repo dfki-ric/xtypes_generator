@@ -8,13 +8,38 @@ else()
   set(NLOHMANN_TARGET nlohmann_json::nlohmann_json)
 endif()
 
+if(DEFINED PYTHON_EXECUTABLE)
+    message(STATUS "Using python from CMake variable.")
+elseif("$ENV{PYTHON}" STREQUAL "")
+    set(PYTHON_EXECUTABLE "python")
+    message(STATUS "Using default python.")
+else()
+    set(PYTHON_EXECUTABLE $ENV{PYTHON})
+    message(STATUS "Using python from environment variable.")
+endif()
+message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
+
+  execute_process(
+      COMMAND ${PYTHON_EXECUTABLE} -c "import sys;print(sys.version_info.major)"
+      OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
+  )
+  execute_process(
+      COMMAND ${PYTHON_EXECUTABLE} -c "import sys;print(sys.version_info.minor)"
+      OUTPUT_VARIABLE PYTHON_MINOR_VERSION
+  )
+  string(STRIP ${PYTHON_MAJOR_VERSION} PYTHON_MAJOR_VERSION)
+  string(STRIP ${PYTHON_MINOR_VERSION} PYTHON_MINOR_VERSION)
+  message(STATUS "Python executable: ${PYTHON_EXECUTABLE}")
+  message(STATUS "Python major version: ${PYTHON_MAJOR_VERSION}")
+  message(STATUS "Python minor version: ${PYTHON_MINOR_VERSION}")
+
 # Find Python 3 interpreter and development
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION} REQUIRED COMPONENTS Interpreter Development)
 
 # Ensure Python was found before proceeding
 if (Python3_FOUND)
-  set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE} CACHE STRING "Python executable" FORCE)
-  message(STATUS "Using detected Python executable: ${PYTHON_EXECUTABLE}")
+  #set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE} CACHE STRING "Python executable" FORCE)
+  #message(STATUS "Using detected Python executable: ${PYTHON_EXECUTABLE}")
 else()
   message(FATAL_ERROR "Python3 not found! Make sure Python3 is installed and accessible in your system.")
 endif()
