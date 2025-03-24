@@ -7,6 +7,16 @@ project(xtypes_generator
 
 include(${CMAKE_SOURCE_DIR}/cmake/dependencies.cmake)
 
+if(APPLE)
+MACRO(CMAKE_USE_FULL_RPATH install_rpath)
+    SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+    SET(CMAKE_INSTALL_RPATH ${install_rpath})
+    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+ENDMACRO(CMAKE_USE_FULL_RPATH)
+CMAKE_USE_FULL_RPATH("${CMAKE_INSTALL_PREFIX}/lib")
+endif(APPLE)
+
 # Create and install the version file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(${CMAKE_BINARY_DIR}/cmake/xtypes_generator-config-version.cmake
